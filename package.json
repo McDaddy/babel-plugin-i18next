@@ -1,0 +1,20 @@
+{
+  "name": "rollup-plugin-i18next",
+  "version": "1.0.0",
+  "description": "i18n manage plugin for rollup",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rollup-plugin",
+    "vite-plugin",
+    "i18n",
+    "i18next"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^4.6.4"
+  }
+}

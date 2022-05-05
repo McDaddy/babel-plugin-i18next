@@ -1,10 +1,10 @@
 {
   "name": "rollup-plugin-i18next",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "i18n manage plugin for rollup",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rollup -c"
   },
   "keywords": [
     "rollup-plugin",
@@ -13,8 +13,14 @@
     "i18next"
   ],
   "author": "",
+  "files": [
+    "dist"
+  ],
   "license": "ISC",
   "devDependencies": {
+    "@rollup/plugin-typescript": "^8.3.2",
+    "rollup": "^2.71.1",
+    "tslib": "^2.4.0",
     "typescript": "^4.6.4"
   }
 }

@@ -1,6 +1,6 @@
-import babelParser from "@babel/parser";
-import traverse from "@babel/traverse";
-import generate from "@babel/generator";
+// import babelParser from "@babel/parser";
+// import traverse from "@babel/traverse";
+// import generate from "@babel/generator";
 import { isExistingWord, loadLocale } from "./locale-cache";
 
 interface Config {
@@ -20,45 +20,50 @@ function i18nPlugin({ localePath, languages, primaryLng, defaultNs }: Config) {
   }
   loadLocale(localePath, languages);
   return {
-    name: "plugin-i18next",
-    async transform(code: string, id: string) {
-      if (id.includes("node_modules")) {
-        return;
-      }
-      let isTarget = false;
-      const ast = babelParser.parse(code, { sourceType: "module" });
-      traverse(ast, {
-        enter(path) {
-          if (
-            path.node.type === "CallExpression" &&
-            path.node.callee.type === "MemberExpression" &&
-            path.node.callee.object.type === "Identifier" &&
-            path.node.callee.object.name === "i18n" &&
-            path.node.callee.property.type === "Identifier" &&
-            path.node.callee.property.name === "s"
-          ) {
-            path.node.callee.property.name = "t";
-            const textArgument = path.node.arguments[0];
-            const nsArgument = path.node.arguments[1];
-            if (textArgument.type === "StringLiteral") {
-              const text = textArgument.value;
-              const ns =
-                nsArgument && nsArgument.type === "StringLiteral"
-                  ? nsArgument.value
-                  : defaultNs;
-              isExistingWord(primaryLng, text, ns!);
-            }
-            isTarget = true;
-          }
-        },
-      });
+    visitor: {
+        CallExpression(path, state) {
+            console.log('path: ', path);
 
-      if (!isTarget) {
-        return;
-      }
-      const { code: _code } = generate(ast, {});
-      return _code;
-    },
+        }
+    }
+    // async transform(code: string, id: string) {
+    //   if (id.includes("node_modules")) {
+    //     return;
+    //   }
+    //   let isTarget = false;
+    //   const ast = babelParser.parse(code, { sourceType: "module" });
+    //   traverse(ast, {
+    //     enter(path) {
+    //       if (
+    //         path.node.type === "CallExpression" &&
+    //         path.node.callee.type === "MemberExpression" &&
+    //         path.node.callee.object.type === "Identifier" &&
+    //         path.node.callee.object.name === "i18n" &&
+    //         path.node.callee.property.type === "Identifier" &&
+    //         path.node.callee.property.name === "s"
+    //       ) {
+    //         path.node.callee.property.name = "t";
+    //         const textArgument = path.node.arguments[0];
+    //         const nsArgument = path.node.arguments[1];
+    //         if (textArgument.type === "StringLiteral") {
+    //           const text = textArgument.value;
+    //           const ns =
+    //             nsArgument && nsArgument.type === "StringLiteral"
+    //               ? nsArgument.value
+    //               : defaultNs;
+    //           isExistingWord(primaryLng, text, ns!);
+    //         }
+    //         isTarget = true;
+    //       }
+    //     },
+    //   });
+
+    //   if (!isTarget) {
+    //     return;
+    //   }
+    //   const { code: _code } = generate(ast, {});
+    //   return _code;
+    // },
   };
 }
 

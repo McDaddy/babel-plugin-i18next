@@ -1,8 +1,9 @@
 import i18nPlugin from "./i18n-plugin";
+import { translateTask } from "./translate";
 
 if (process.env.NODE_ENV !== "production") {
   setInterval(async () => {
-    console.log(123123123);
+    translateTask();
   }, 5000);
 }
 

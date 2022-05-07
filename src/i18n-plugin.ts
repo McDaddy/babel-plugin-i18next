@@ -1,69 +1,78 @@
-// import babelParser from "@babel/parser";
-// import traverse from "@babel/traverse";
-// import generate from "@babel/generator";
 import { isExistingWord, loadLocale } from "./locale-cache";
+import { CallExpression } from "@babel/types";
+import * as t from "@babel/types";
+import { addToTranslateQueue } from "./translate";
+import { Config, status, optionChecker, pluginOptions } from "./options";
+import { find, some } from "lodash";
 
-interface Config {
-  localePath: string | string[];
-  primaryLng: string;
-  defaultNs?: string;
-  languages: { fileName: string; code: string }[];
-}
-
-function i18nPlugin({ localePath, languages, primaryLng, defaultNs }: Config) {
-  console.log("init plugin");
-
-  if (!languages || languages.length <= 1) {
-    throw new Error(
-      "languages config is required and must be more than one type of language"
-    );
-  }
-  loadLocale(localePath, languages);
+function i18nPlugin() {
   return {
     visitor: {
-        CallExpression(path, state) {
-            console.log('path: ', path);
+      CallExpression: {
+        enter(
+          path: { node: CallExpression },
+          state: { opts: Config; filename: string }
+        ) {
+          const { node } = path;
+          const { opts, filename } = state;
+          optionChecker(opts);
+          const { primaryLng, languages, defaultNS, localePath } = pluginOptions!;
+          if (filename.includes("node_modules")) {
+            return;
+          }
 
-        }
-    }
-    // async transform(code: string, id: string) {
-    //   if (id.includes("node_modules")) {
-    //     return;
-    //   }
-    //   let isTarget = false;
-    //   const ast = babelParser.parse(code, { sourceType: "module" });
-    //   traverse(ast, {
-    //     enter(path) {
-    //       if (
-    //         path.node.type === "CallExpression" &&
-    //         path.node.callee.type === "MemberExpression" &&
-    //         path.node.callee.object.type === "Identifier" &&
-    //         path.node.callee.object.name === "i18n" &&
-    //         path.node.callee.property.type === "Identifier" &&
-    //         path.node.callee.property.name === "s"
-    //       ) {
-    //         path.node.callee.property.name = "t";
-    //         const textArgument = path.node.arguments[0];
-    //         const nsArgument = path.node.arguments[1];
-    //         if (textArgument.type === "StringLiteral") {
-    //           const text = textArgument.value;
-    //           const ns =
-    //             nsArgument && nsArgument.type === "StringLiteral"
-    //               ? nsArgument.value
-    //               : defaultNs;
-    //           isExistingWord(primaryLng, text, ns!);
-    //         }
-    //         isTarget = true;
-    //       }
-    //     },
-    //   });
-
-    //   if (!isTarget) {
-    //     return;
-    //   }
-    //   const { code: _code } = generate(ast, {});
-    //   return _code;
-    // },
+          if (
+            t.isMemberExpression(node.callee) &&
+            t.isIdentifier(node.callee.object) &&
+            node.callee.object.name === "i18n" &&
+            t.isIdentifier(node.callee.property) &&
+            node.callee.property.name === "s"
+          ) {
+            if (!status.initialized) {
+              loadLocale(localePath, languages);
+            }
+            status.initialized = true;
+            const textArgument = node.arguments[0];
+            const optsArgument = node.arguments[1];
+            if (t.isStringLiteral(textArgument)) {
+              const text = textArgument.value;
+              if (!text) {
+                return;
+              }
+              let ns = defaultNS;
+              if (t.isObjectExpression(optsArgument)) {
+                const nsProperty = find(
+                  optsArgument.properties,
+                  (property) =>
+                    t.isProperty(property) &&
+                    t.isIdentifier(property.key) &&
+                    property.key.name === "ns"
+                );
+                if (
+                  nsProperty &&
+                  t.isProperty(nsProperty) &&
+                  t.isStringLiteral(nsProperty.value)
+                ) {
+                  ns = nsProperty.value!.value;
+                }
+              }
+              if (!isExistingWord(primaryLng, text, ns)) {
+                if (process.env.NODE_ENV === "production") {
+                  throw new Error(
+                    `Can't find translation for ${text} with namespace ${ns}`
+                  );
+                }
+                addToTranslateQueue(text, ns, filename);
+              }
+              node.arguments[1] = t.objectExpression([
+                t.objectProperty(t.identifier("ns"), t.stringLiteral(ns!)),
+              ]);
+            }
+            node.callee.property.name = "t";
+          }
+        },
+      },
+    },
   };
 }
 

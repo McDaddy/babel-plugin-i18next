@@ -1,57 +1,53 @@
 import fs from "fs";
 import path from "path";
 
-interface LocaleCache {
-  fileMapping: { path: string; ns: string[] }[];
-  content: { [key: string]: any };
-}
-
 /**
  * structure like this:
  * {
  *  'en': {
- *     'fileMapping': [{ path: 'path1', ns: ['ns1', 'ns2']}, { path: 'path2', ns: ['ns1', 'ns2']} ],
+ *     'fileMapping': [{ path: 'path1', ns: ['ns1', 'ns2']}, { path: 'path2', ns: ['ns3', 'ns4']} ],
  *     'content': { 'ns1': { 'key1': 'value1' }, 'ns2': { 'key2': 'value2' } }
  *   },
  *  'zh': {
- *     'fileMapping': [{ path: 'path1', ns: ['ns1', 'ns2']}, { path: 'path2', ns: ['ns1', 'ns2']} ],
+ *     'fileMapping': [{ path: 'path1', ns: ['ns1', 'ns2']}, { path: 'path2', ns: ['ns3', 'ns4']} ],
  *     'content': { 'ns1': { 'key1': 'value1' }, 'ns2': { 'key2': 'value2' } }
  *   }
  * }
  */
-const localeCache = new Map<string, LocaleCache>();
-const namespaces: string[] = [];
+const localeCache = new Map<string, { [k: string]: Obj } >();
+export const namespaces: string[] = [];
+export const fileMapping: { path: string, ns: string[] }[] = [];
 
 export const loadLocale = (
-  localePath: string | string[],
+  localePaths: string[],
   languages: { fileName: string; code: string }[]
 ) => {
-  languages.forEach(({ code }) => {
-    localeCache.set(code, { fileMapping: [], content: {} });
+  languages.forEach(({ fileName }) => {
+    localeCache.set(fileName, {});
   });
-  const localePaths = Array.isArray(localePath) ? localePath : [localePath];
   let parseNsDone = false;
   for (const language of languages) {
-    const { code, fileName } = language;
+    const { fileName } = language;
     for (const localePath of localePaths) {
       const fileDirPath = path.isAbsolute(localePath)
         ? localePath
         : path.join(process.cwd(), localePath);
       const localeFilePath = path.join(
         fileDirPath,
-        fileName.endsWith(".json") ? fileName : `${fileName}.json`
+        `${fileName}.json`
       );
       const fileContent = fs.readFileSync(localeFilePath).toString("utf8");
       const localeObj = JSON.parse(fileContent);
-      const lngCache = localeCache.get(code);
-      const { content } = lngCache!;
-      lngCache!.content = { ...content, ...localeObj };
+      const lngCache = localeCache.get(fileName);
+      localeCache.set(fileName, { ...lngCache, ...localeObj })
       const fileNamespaces = Object.keys(localeObj);
-      lngCache!.fileMapping.push({
+      fileMapping.push({
         path: localeFilePath,
         ns: fileNamespaces,
       });
-      !parseNsDone && namespaces.push(...fileNamespaces);
+      if (!parseNsDone) {
+        namespaces.push(...fileNamespaces);
+      }
     }
     parseNsDone = true;
   }
@@ -63,12 +59,24 @@ export const loadLocale = (
   }
 };
 
-export const isExistingWord = (lng: string, text: string, ns: string) => {
-  const { content } = localeCache.get(lng)!;
-  const nsContent = content[ns];
-  if (!nsContent || !nsContent[text]) {
+export const isExistingWord = (lng: string, text: string, ns: string, alert?: boolean) => {
+  const cache = localeCache.get(lng)!;
+  const nsContent = cache[ns];
+  if ((!nsContent || !nsContent[text]) && alert !== false) {
       console.log(`word: ${text} not found in namespace: ${ns}`);
       return false;
   }
   return true;
+}
+
+export const getValue = (lng: string, ns: string, text: string) => {
+   return localeCache.get(lng)![ns][text];
+}
+
+export const getLngCache = (lng: string) => {
+  return localeCache.get(lng);
+}
+
+export const setLngCache = (lng: string, value: { [key: string]: Obj }) => {
+  localeCache.set(lng, value);
 }

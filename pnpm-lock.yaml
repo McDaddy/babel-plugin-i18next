@@ -16,6 +16,7 @@ specifiers:
   chalk: 4.x
   i18next-scanner: ^3.1.0
   lodash: ^4.17.21
+  prettier: ^2.6.2
   rollup: ^2.71.1
   tslib: ^2.4.0
   typescript: ^4.6.4
@@ -40,6 +41,7 @@ devDependencies:
   '@types/node': 17.0.31
   '@types/vinyl-fs': 2.4.12
   chalk: 4.1.2
+  prettier: 2.6.2
   rollup: 2.71.1
   tslib: 2.4.0
   typescript: 4.6.4
@@ -1073,6 +1075,12 @@ packages:
     resolution: {integrity: sha512-ravE6m9Atw9Z/jjttRUZ+clIXogdghyZAuWJ3qEzjT+jI/dL1ifAqhZeC5VHzQp1MSt1+jxKkFNemj/iO7tVUA==}
     engines: {node: '>=4'}
     dev: false
+
+  /prettier/2.6.2:
+    resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
 
   /process-nextick-args/2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}

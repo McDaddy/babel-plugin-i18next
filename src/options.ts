@@ -20,18 +20,16 @@ export const optionChecker = (option: Config) => {
   }
   const { primaryLng, languages, defaultNS, localePath } = option ?? {};
   if (!languages || languages.length <= 1) {
-    throw new Error(
-      "languages config is required and must be more than one type of language"
-    );
+    throw new Error('languages config is required and must be more than one type of language');
   }
   if (!primaryLng) {
-    throw new Error("primaryLng is required option for babel-plugin-i18next");
+    throw new Error('primaryLng is required option for babel-plugin-i18next');
   }
   if (!defaultNS) {
-    throw new Error("defaultNS is required option for babel-plugin-i18next");
+    throw new Error('defaultNS is required option for babel-plugin-i18next');
   }
   if (!localePath) {
-    throw new Error("localePath is required option for babel-plugin-i18next");
+    throw new Error('localePath is required option for babel-plugin-i18next');
   }
   localeFileNames = languages.map((lng) => lng.fileName);
 

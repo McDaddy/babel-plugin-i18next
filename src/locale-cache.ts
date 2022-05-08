@@ -5,39 +5,36 @@ import { pluginOptions } from './options';
 /**
  * structure like this:
  * {
- *  'en': {
- *     'fileMapping': [{ path: 'path1', ns: ['ns1', 'ns2']}, { path: 'path2', ns: ['ns3', 'ns4']} ],
- *     'content': { 'ns1': { 'key1': 'value1' }, 'ns2': { 'key2': 'value2' } }
- *   },
- *  'zh': {
- *     'fileMapping': [{ path: 'path1', ns: ['ns1', 'ns2']}, { path: 'path2', ns: ['ns3', 'ns4']} ],
- *     'content': { 'ns1': { 'key1': 'value1' }, 'ns2': { 'key2': 'value2' } }
- *   }
+ *  'en': { 'ns1': { 'key1': 'value1' }, 'ns2': { 'key2': 'value2' } },
+ *  'zh': { 'ns1': { 'key1': 'value1' }, 'ns2': { 'key2': 'value2' } }
  * }
  */
 const localeCache = new Map<string, { [k: string]: Obj }>();
 export const namespaces: string[] = [];
 export const fileMapping: { path: string; ns: string[] }[] = [];
 
-export const loadLocale = (localePaths: string[], languages: { fileName: string; code: string }[]) => {
-  languages.forEach(({ fileName }) => {
-    localeCache.set(fileName, {});
+// load all locale content into cache when init
+export const loadLocale = (localePaths: string[], languages: { localeName: string; code: string }[]) => {
+  languages.forEach(({ localeName }) => {
+    localeCache.set(localeName, {});
   });
   let parseNsDone = false;
   for (const language of languages) {
-    const { fileName } = language;
+    const { localeName } = language;
     for (const localePath of localePaths) {
       const fileDirPath = path.isAbsolute(localePath) ? localePath : path.join(process.cwd(), localePath);
-      const localeFilePath = path.join(fileDirPath, `${fileName}.json`);
+      const localeFilePath = path.join(fileDirPath, `${localeName}.json`);
       const fileContent = fs.readFileSync(localeFilePath).toString('utf8');
       const localeObj = JSON.parse(fileContent);
-      const lngCache = localeCache.get(fileName);
-      localeCache.set(fileName, { ...lngCache, ...localeObj });
+      localeCache.set(localeName, localeObj);
       const fileNamespaces = Object.keys(localeObj);
       fileMapping.push({
         path: localeFilePath,
         ns: fileNamespaces,
       });
+      fs.watch(localeFilePath, () => {
+        updateFileCache(localeFilePath);
+      }) 
       if (!parseNsDone) {
         namespaces.push(...fileNamespaces);
       }
@@ -51,8 +48,8 @@ export const loadLocale = (localePaths: string[], languages: { fileName: string;
 };
 
 export const isExistingWord = (text: string, ns: string, alert?: boolean) => {
-  const isExist = pluginOptions?.languages.every(({ fileName }) => {
-    const cache = localeCache.get(fileName)!;
+  const isExist = pluginOptions?.languages.every(({ localeName }) => {
+    const cache = localeCache.get(localeName)!;
     const nsContent = cache[ns];
     if (nsContent && nsContent[text]) {
       return true;
@@ -73,6 +70,10 @@ export const getLngCache = (lng: string) => {
   return localeCache.get(lng);
 };
 
-export const setLngCache = (lng: string, value: { [key: string]: Obj }) => {
-  localeCache.set(lng, value);
-};
+export const updateFileCache = (filePath: string) => {
+  const fileName = path.basename(filePath);
+  const localeName = fileName.split('.')[0];
+  const fileContent = fs.readFileSync(filePath).toString('utf8');
+  const localeObj = JSON.parse(fileContent);
+  localeCache.set(localeName, { ...localeCache.get(localeName), ...localeObj }); 
+}

@@ -7,9 +7,7 @@ import {
   isEqual,
   unset,
   merge,
-  invert,
   get,
-  map,
   find,
   pick,
   cloneDeep,
@@ -23,8 +21,9 @@ import {
   getLngCache,
   isExistingWord,
   namespaces,
-  setLngCache,
 } from "./locale-cache";
+
+const UN_TRANSLATE_WORD = "__NOT_TRANSLATED__";
 
 // See options at https://github.com/i18next/i18next-scanner#options
 const getOptions = (customProps: any) => {
@@ -36,7 +35,7 @@ const getOptions = (customProps: any) => {
       list: ["i18next.t", "i18n.t"],
       extensions: [".js", ".jsx", ".ts", ".tsx"],
     },
-    defaultValue: "__NOT_TRANSLATED__",
+    defaultValue: UN_TRANSLATE_WORD,
     resource: {
       jsonIndent: 2,
       lineEnding: "\n",
@@ -74,9 +73,8 @@ function getCustomTransform(newTranslateSource: Map<string, Obj> | null) {
         ) {
           // means this word is included in the new translated list or the word is already in the old locale file
           // and it's not a comment word
-          opts.defaultValue = "__NOT_TRANSLATED__";
+          opts.defaultValue = UN_TRANSLATE_WORD;
           parser.set(word, opts);
-          console.log('word: ', word);
         }
       }
     );
@@ -89,19 +87,20 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
   function customFlush(done: Function) {
     // @ts-ignore
     const { resStore } = this.parser;
-    const { resource, removeUnusedKeys, sort, defaultValue } =
+    const { resource, removeUnusedKeys, sort } =
     // @ts-ignore
       this.parser.options;
 
     for (let index = 0; index < Object.keys(resStore).length; index++) {
       const lng = Object.keys(resStore)[index];
+      // contains all keys with untranslated values
       const nsResource = resStore[lng]; // 所有被抠出来的英文key，对应的都是__not_translated，需要跟后面的source合并
       // 未翻译的英文的value和key保持一致
       if (lng === pluginOptions?.primaryLng) {
         Object.keys(nsResource).forEach((_ns) => {
           const obj = nsResource[_ns];
           Object.keys(obj).forEach((k) => {
-            if (obj[k] === defaultValue) {
+            if (obj[k] === UN_TRANSLATE_WORD) {
               obj[k] = k.replace("&#58;", ":"); // 转义冒号，免得和分割符冲突
             }
           });
@@ -139,8 +138,8 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
         Object.keys(output).forEach((_ns) => {
           const obj = output[_ns];
           Object.keys(obj).forEach((k) => {
-            if (obj[k] === defaultValue) {
-              obj[k] = translatedWords[k];
+            if (obj[k] === UN_TRANSLATE_WORD) {
+              obj[k] = translatedWords[k] ?? UN_TRANSLATE_WORD;
             }
           });
         });
@@ -179,7 +178,6 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
           console.log(chalk.green(`Updated content to ${filePath}`));
         }
       }
-      setLngCache(lng, output);
     }
 
     done();

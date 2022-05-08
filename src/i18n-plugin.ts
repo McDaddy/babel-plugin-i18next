@@ -3,7 +3,7 @@ import { CallExpression } from '@babel/types';
 import * as t from '@babel/types';
 import { addToTranslateQueue } from './translate';
 import { Config, status, optionChecker, pluginOptions } from './options';
-import { find, some } from 'lodash';
+import { find } from 'lodash';
 
 function i18nPlugin() {
   return {
@@ -13,7 +13,7 @@ function i18nPlugin() {
           const { node } = path;
           const { opts, filename } = state;
           optionChecker(opts);
-          const { primaryLng, languages, defaultNS, localePath } = pluginOptions!;
+          const { languages, defaultNS, localePath } = pluginOptions!;
           if (filename.includes('node_modules')) {
             return;
           }
@@ -52,7 +52,6 @@ function i18nPlugin() {
                 }
                 addToTranslateQueue(text, ns, filename);
               }
-              node.arguments[1] = t.objectExpression([t.objectProperty(t.identifier('ns'), t.stringLiteral(ns!))]);
             }
             node.callee.property.name = 't';
           }

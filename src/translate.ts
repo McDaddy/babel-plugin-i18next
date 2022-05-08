@@ -7,12 +7,12 @@ import { writeLocale } from './write-locales';
 interface Word {
   text: string;
   ns: string;
-  fileName: string;
+  localeName: string;
 }
 
 const pendingQueue: Word[] = [];
 
-export const addToTranslateQueue = (text: string, ns: string, fileName: string) => {
+export const addToTranslateQueue = (text: string, ns: string, localeName: string) => {
   if (!namespaces.includes(ns)) {
     console.error(`Namespace ${ns} doesn't exist in current locale files. Please manually add it.`);
     return;
@@ -24,7 +24,7 @@ export const addToTranslateQueue = (text: string, ns: string, fileName: string) 
     pendingQueue.push({
       text,
       ns,
-      fileName,
+      localeName,
     });
   }
 };
@@ -36,7 +36,9 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
         reject('timeout');
       }, 3000);
     });
-    const result = await Promise.race([freeTranslate(word, { from, to }), timeoutPromise]);
+    const result = (await Promise.race([freeTranslate(word, { from, to }), timeoutPromise])) as Awaited<
+      ReturnType<typeof freeTranslate>
+    >;
     return { from: word, to: result.text };
   } catch (error) {
     console.error(`Failed to translate word ${word}`, error);
@@ -51,7 +53,7 @@ export const translateTask = async () => {
   }
   const { fileList, words } = pendingQueue.reduce(
     (acc, item) => {
-      acc.fileList.add(item.fileName);
+      acc.fileList.add(item.localeName);
       acc.words.add(item.text);
       return acc;
     },
@@ -62,7 +64,7 @@ export const translateTask = async () => {
     .map((lng) => lng.code);
   const toLngFileList = pluginOptions!.languages
     .filter((lng) => lng.code !== pluginOptions?.primaryLng)
-    .map((lng) => lng.fileName);
+    .map((lng) => lng.localeName);
   const resultMap = new Map<string, Obj>();
   for (let i = 0; i < toLngList.length; i++) {
     const toLng = toLngList[i];
@@ -78,7 +80,6 @@ export const translateTask = async () => {
       {} as Obj,
     );
     resultMap.set(toLngFileList[i]!, resultKVs);
-    console.log('resultKVs: ', resultKVs);
   }
   writeLocale(resultMap);
   pendingQueue.length = 0;

@@ -6,7 +6,7 @@ export interface Config {
   localePath: string | string[];
   primaryLng: string;
   defaultNS: string;
-  languages: { fileName: string; code: string }[];
+  languages: { localeName: string; code: string }[];
   customProps: any;
 }
 
@@ -31,7 +31,7 @@ export const optionChecker = (option: Config) => {
   if (!localePath) {
     throw new Error('localePath is required option for babel-plugin-i18next');
   }
-  localeFileNames = languages.map((lng) => lng.fileName);
+  localeFileNames = languages.map((lng) => lng.localeName);
 
   const _localePaths = Array.isArray(localePath) ? localePath : [localePath];
   pluginOptions = { ...option, localePath: _localePaths };

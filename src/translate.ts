@@ -3,6 +3,7 @@ import { reduce } from 'lodash';
 import { namespaces } from './locale-cache';
 import { pluginOptions, status } from './options';
 import { writeLocale } from './write-locales';
+import { youdaoTranslate } from './youdao-translate';
 
 interface Word {
   text: string;
@@ -69,11 +70,14 @@ export const translateTask = async () => {
     .filter((lng) => lng.code !== pluginOptions?.primaryLng)
     .map((lng) => lng.localeName);
   const resultMap = new Map<string, Obj>();
+  const translateMethod = pluginOptions?.translateApi?.type ?? 'free';
   for (let i = 0; i < toLngList.length; i++) {
     const toLng = toLngList[i];
-
-    const promises = Array.from(words).map((word) => freeTranslateCall(word, pluginOptions!.primaryLng, toLng));
-    const results = await Promise.all(promises);
+    const promises =
+      translateMethod === 'free'
+        ? Promise.all(Array.from(words).map((word) => freeTranslateCall(word, pluginOptions!.primaryLng, toLng)))
+        : youdaoTranslate(Array.from(words), pluginOptions?.primaryLng!, toLng);
+    const results = await promises;
     const resultKVs = reduce(
       results,
       (acc, item) => {

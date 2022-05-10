@@ -2,7 +2,7 @@ import scanner from 'i18next-scanner';
 import vfs from 'vinyl-fs';
 import fs from 'fs';
 import path from 'path';
-import { differenceWith, isEqual, unset, merge, get, find, pick, cloneDeep } from 'lodash';
+import { differenceWith, isEqual, unset, merge, get, find, pick, cloneDeep, map } from 'lodash';
 import flattenObjectKeys from 'i18next-scanner/lib/flatten-object-keys';
 import omitEmptyObject from 'i18next-scanner/lib/omit-empty-object';
 import chalk from 'chalk';
@@ -147,13 +147,9 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
   return customFlush;
 }
 
-const FILE_EXTENSION = '/**/*.{js,jsx,ts,tsx}';
-
 export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) => {
-  let paths = [`${process.cwd()}/app/${FILE_EXTENSION}`];
-  // if (include) {
-  //   paths = include.map((p) => `${p}${FILE_EXTENSION}`);
-  // }
+  const include = pluginOptions?.include;
+  let paths = pluginOptions?.include;
   // if (exclude.length > 0) {
   //   const excludePaths = exclude.map((p) => `!${p}${FILE_EXTENSION}`);
   //   paths = paths.concat(excludePaths);
@@ -161,7 +157,7 @@ export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) =
 
   new Promise((resolve) => {
     vfs
-      .src(paths)
+      .src(paths!)
       .pipe(
         scanner(
           getOptions(pluginOptions?.customProps),

@@ -26,7 +26,7 @@ export const loadLocale = (localePaths: string[], languages: { localeName: strin
       const localeFilePath = path.join(fileDirPath, `${localeName}.json`);
       const fileContent = fs.readFileSync(localeFilePath).toString('utf8');
       const localeObj = JSON.parse(fileContent);
-      localeCache.set(localeName, localeObj);
+      localeCache.set(localeName, { ...localeCache.get(localeName), ...localeObj });
       const fileNamespaces = Object.keys(localeObj);
       fileMapping.push({
         path: localeFilePath,
@@ -34,7 +34,7 @@ export const loadLocale = (localePaths: string[], languages: { localeName: strin
       });
       fs.watch(localeFilePath, () => {
         updateFileCache(localeFilePath);
-      }) 
+      });
       if (!parseNsDone) {
         namespaces.push(...fileNamespaces);
       }
@@ -47,19 +47,24 @@ export const loadLocale = (localePaths: string[], languages: { localeName: strin
   }
 };
 
+// check if exist in current locale by text + ns
 export const isExistingWord = (text: string, ns: string, alert?: boolean) => {
-  const isExist = pluginOptions?.languages.every(({ localeName }) => {
+  let notTranslated = false;
+  const matched = pluginOptions?.languages.every(({ localeName }) => {
     const cache = localeCache.get(localeName)!;
     const nsContent = cache[ns];
     if (nsContent && nsContent[text]) {
+      if (nsContent[text] === '__NOT_TRANSLATED__') {
+        notTranslated = true;
+      }
       return true;
     }
     return false;
   });
-  if (!isExist && alert !== false) {
+  if (!matched && alert !== false) {
     console.log(`word: ${text} not found in namespace: ${ns}`);
   }
-  return isExist;
+  return { notTranslated, matched };
 };
 
 export const getValue = (lng: string, ns: string, text: string) => {
@@ -75,5 +80,5 @@ export const updateFileCache = (filePath: string) => {
   const localeName = fileName.split('.')[0];
   const fileContent = fs.readFileSync(filePath).toString('utf8');
   const localeObj = JSON.parse(fileContent);
-  localeCache.set(localeName, { ...localeCache.get(localeName), ...localeObj }); 
-}
+  localeCache.set(localeName, { ...localeCache.get(localeName), ...localeObj });
+};

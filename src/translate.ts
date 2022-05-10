@@ -1,7 +1,7 @@
 import freeTranslate from '@vitalets/google-translate-api';
 import { reduce } from 'lodash';
 import { namespaces } from './locale-cache';
-import { pluginOptions } from './options';
+import { pluginOptions, status } from './options';
 import { writeLocale } from './write-locales';
 
 interface Word {
@@ -47,6 +47,9 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
 };
 
 export const translateTask = async () => {
+  if (!status.initialized) {
+    return;
+  }
   if (!pendingQueue.length) {
     writeLocale(null);
     return;

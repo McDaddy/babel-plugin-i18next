@@ -26,9 +26,9 @@ function i18nPlugin() {
             node.callee.property.name === 's'
           ) {
             if (!status.initialized) {
+              status.initialized = true;
               loadLocale(localePath, languages);
             }
-            status.initialized = true;
             const textArgument = node.arguments[0];
             const optsArgument = node.arguments[1];
             if (t.isStringLiteral(textArgument)) {
@@ -46,9 +46,10 @@ function i18nPlugin() {
                   ns = nsProperty.value!.value;
                 }
               }
-              if (!isExistingWord(text, ns)) {
+              const { matched, notTranslated } = isExistingWord(text, ns);
+              if (!matched || notTranslated) {
                 if (process.env.NODE_ENV === 'production') {
-                  throw new Error(`Can't find translation for ${text} with namespace ${ns}`);
+                  throw new Error(!matched ? `Can't find translation for ${text} with namespace ${ns}` : `Word ${text} with namespace ${ns} is not translated`);
                 }
                 addToTranslateQueue(text, ns, filename);
               }

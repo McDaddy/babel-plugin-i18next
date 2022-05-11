@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
 import { pluginOptions } from './options';
@@ -62,13 +63,21 @@ export const isExistingWord = (text: string, ns: string, alert?: boolean) => {
     return false;
   });
   if (!matched && alert !== false) {
-    console.log(`word: ${text} not found in namespace: ${ns}`);
+    console.log(chalk.yellow(`[translation]: word ${text} not found in namespace: ${ns}`));
   }
   return { notTranslated, matched };
 };
 
 export const getValue = (lng: string, ns: string, text: string) => {
   return localeCache.get(lng)![ns][text];
+};
+
+export const getValues = (ns: string, text: string) => {
+  const values: Obj = {};
+  for (const lng of localeCache.keys()) {
+    values[lng] = localeCache.get(lng)![ns][text];
+  }
+  return values;
 };
 
 export const getLngCache = (lng: string) => {

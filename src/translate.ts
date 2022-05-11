@@ -1,5 +1,5 @@
 import freeTranslate from '@vitalets/google-translate-api';
-import { reduce } from 'lodash';
+import { find, reduce } from 'lodash';
 import { googleTranslate } from './google-translate';
 import { namespaces } from './locale-cache';
 import { pluginOptions, status } from './options';
@@ -9,12 +9,12 @@ import { youdaoTranslate } from './youdao-translate';
 interface Word {
   text: string;
   ns: string;
-  code: string;
+  fileName: string;
 }
 
 const pendingQueue: Word[] = [];
 
-export const addToTranslateQueue = (text: string, ns: string, code: string) => {
+export const addToTranslateQueue = (text: string, ns: string, fileName: string) => {
   if (!namespaces.includes(ns)) {
     console.error(`Namespace ${ns} doesn't exist in current locale files. Please manually add it.`);
     return;
@@ -26,7 +26,7 @@ export const addToTranslateQueue = (text: string, ns: string, code: string) => {
     pendingQueue.push({
       text,
       ns,
-      code,
+      fileName,
     });
   }
 };
@@ -63,7 +63,7 @@ export const translateTask = async () => {
   }
   const { fileList, words } = pendingQueue.reduce(
     (acc, item) => {
-      acc.fileList.add(item.code);
+      acc.fileList.add(item.fileName);
       acc.words.add(item.text);
       return acc;
     },

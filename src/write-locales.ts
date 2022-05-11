@@ -2,7 +2,7 @@ import scanner from 'i18next-scanner';
 import vfs from 'vinyl-fs';
 import fs from 'fs';
 import path from 'path';
-import { differenceWith, isEqual, unset, merge, get, find, pick, cloneDeep, map } from 'lodash';
+import { differenceWith, isEqual, unset, merge, get, find, pick, cloneDeep } from 'lodash';
 import flattenObjectKeys from 'i18next-scanner/lib/flatten-object-keys';
 import omitEmptyObject from 'i18next-scanner/lib/omit-empty-object';
 import chalk from 'chalk';

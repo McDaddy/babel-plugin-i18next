@@ -36,6 +36,7 @@
     "lodash": "^4.17.21",
     "prettier": "^2.6.2",
     "rollup": "^2.71.1",
+    "translate": "^1.4.1",
     "tslib": "^2.4.0",
     "typescript": "^4.6.4",
     "vinyl-fs": "^3.0.3"

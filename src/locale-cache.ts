@@ -14,19 +14,19 @@ export const namespaces: string[] = [];
 export const fileMapping: { path: string; ns: string[] }[] = [];
 
 // load all locale content into cache when init
-export const loadLocale = (localePaths: string[], languages: { localeName: string; code: string }[]) => {
-  languages.forEach(({ localeName }) => {
-    localeCache.set(localeName, {});
+export const loadLocale = (localePaths: string[], languages: { code: string }[]) => {
+  languages.forEach(({ code }) => {
+    localeCache.set(code, {});
   });
   let parseNsDone = false;
   for (const language of languages) {
-    const { localeName } = language;
+    const { code } = language;
     for (const localePath of localePaths) {
       const fileDirPath = path.isAbsolute(localePath) ? localePath : path.join(process.cwd(), localePath);
-      const localeFilePath = path.join(fileDirPath, `${localeName}.json`);
+      const localeFilePath = path.join(fileDirPath, `${code}.json`);
       const fileContent = fs.readFileSync(localeFilePath).toString('utf8');
       const localeObj = JSON.parse(fileContent);
-      localeCache.set(localeName, { ...localeCache.get(localeName), ...localeObj });
+      localeCache.set(code, { ...localeCache.get(code), ...localeObj });
       const fileNamespaces = Object.keys(localeObj);
       fileMapping.push({
         path: localeFilePath,
@@ -50,8 +50,8 @@ export const loadLocale = (localePaths: string[], languages: { localeName: strin
 // check if exist in current locale by text + ns
 export const isExistingWord = (text: string, ns: string, alert?: boolean) => {
   let notTranslated = false;
-  const matched = pluginOptions?.languages.every(({ localeName }) => {
-    const cache = localeCache.get(localeName)!;
+  const matched = pluginOptions?.languages.every(({ code }) => {
+    const cache = localeCache.get(code)!;
     const nsContent = cache[ns];
     if (nsContent && nsContent[text]) {
       if (nsContent[text] === '__NOT_TRANSLATED__') {
@@ -77,8 +77,8 @@ export const getLngCache = (lng: string) => {
 
 export const updateFileCache = (filePath: string) => {
   const fileName = path.basename(filePath);
-  const localeName = fileName.split('.')[0];
+  const code = fileName.split('.')[0];
   const fileContent = fs.readFileSync(filePath).toString('utf8');
   const localeObj = JSON.parse(fileContent);
-  localeCache.set(localeName, { ...localeCache.get(localeName), ...localeObj });
+  localeCache.set(code, { ...localeCache.get(code), ...localeObj });
 };

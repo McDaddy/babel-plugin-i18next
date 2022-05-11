@@ -1,5 +1,6 @@
 import freeTranslate from '@vitalets/google-translate-api';
 import { reduce } from 'lodash';
+import { googleTranslate } from './google-translate';
 import { namespaces } from './locale-cache';
 import { pluginOptions, status } from './options';
 import { writeLocale } from './write-locales';
@@ -8,12 +9,12 @@ import { youdaoTranslate } from './youdao-translate';
 interface Word {
   text: string;
   ns: string;
-  localeName: string;
+  code: string;
 }
 
 const pendingQueue: Word[] = [];
 
-export const addToTranslateQueue = (text: string, ns: string, localeName: string) => {
+export const addToTranslateQueue = (text: string, ns: string, code: string) => {
   if (!namespaces.includes(ns)) {
     console.error(`Namespace ${ns} doesn't exist in current locale files. Please manually add it.`);
     return;
@@ -25,21 +26,26 @@ export const addToTranslateQueue = (text: string, ns: string, localeName: string
     pendingQueue.push({
       text,
       ns,
-      localeName,
+      code,
     });
   }
 };
 
+const localeMap: Obj = {
+  zh: 'zh-CN',
+};
+
 const freeTranslateCall = async (word: string, from: string, to: string) => {
   try {
-    const timeoutPromise = new Promise((resolve, reject) => {
+    const timeoutPromise = new Promise((_resolve, reject) => {
       setTimeout(() => {
         reject('timeout');
       }, 3000);
     });
-    const result = (await Promise.race([freeTranslate(word, { from, to }), timeoutPromise])) as Awaited<
-      ReturnType<typeof freeTranslate>
-    >;
+    const result = (await Promise.race([
+      freeTranslate(word, { from: localeMap[from] ?? from, to: localeMap[to] ?? to }),
+      timeoutPromise,
+    ])) as Awaited<ReturnType<typeof freeTranslate>>;
     return { from: word, to: result.text };
   } catch (error) {
     console.error(`Failed to translate word ${word}`, error);
@@ -57,7 +63,7 @@ export const translateTask = async () => {
   }
   const { fileList, words } = pendingQueue.reduce(
     (acc, item) => {
-      acc.fileList.add(item.localeName);
+      acc.fileList.add(item.code);
       acc.words.add(item.text);
       return acc;
     },
@@ -66,17 +72,22 @@ export const translateTask = async () => {
   const toLngList = pluginOptions!.languages
     .filter((lng) => lng.code !== pluginOptions?.primaryLng)
     .map((lng) => lng.code);
-  const toLngFileList = pluginOptions!.languages
-    .filter((lng) => lng.code !== pluginOptions?.primaryLng)
-    .map((lng) => lng.localeName);
   const resultMap = new Map<string, Obj>();
   const translateMethod = pluginOptions?.translateApi?.type ?? 'free';
   for (let i = 0; i < toLngList.length; i++) {
     const toLng = toLngList[i];
+    const fromSpecialCode = pluginOptions?.languages?.find(
+      (lng) => lng.code === pluginOptions?.primaryLng!,
+    )?.specialCode;
+    const toSpecialCode = pluginOptions?.languages?.find((lng) => lng.code === toLng)?.specialCode;
+    const fromLngCode = fromSpecialCode ?? pluginOptions?.primaryLng!;
+    const toLngCode = toSpecialCode ?? toLng;
     const promises =
       translateMethod === 'free'
-        ? Promise.all(Array.from(words).map((word) => freeTranslateCall(word, pluginOptions!.primaryLng, toLng)))
-        : youdaoTranslate(Array.from(words), pluginOptions?.primaryLng!, toLng);
+        ? Promise.all(Array.from(words).map((word) => freeTranslateCall(word, fromLngCode, toLngCode)))
+        : translateMethod === 'google'
+        ? Promise.all(Array.from(words).map((word) => googleTranslate(word, fromLngCode, toLngCode)))
+        : youdaoTranslate(Array.from(words), fromLngCode, toLngCode);
     const results = await promises;
     const resultKVs = reduce(
       results,
@@ -86,7 +97,7 @@ export const translateTask = async () => {
       },
       {} as Obj,
     );
-    resultMap.set(toLngFileList[i]!, resultKVs);
+    resultMap.set(toLngList[i]!, resultKVs);
   }
   writeLocale(resultMap);
   pendingQueue.length = 0;

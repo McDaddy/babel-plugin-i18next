@@ -1,13 +1,12 @@
 import crypto from 'crypto';
-import fs from 'fs';
 import axios from 'axios';
-import path from 'path';
 import dotenv from 'dotenv';
 import { pluginOptions } from './options';
+import chalk from 'chalk';
+import { forEach } from 'lodash';
 
 const localeCodeMap: Obj = {
-  'zh-CN': 'zh-CHS',
-  'zh-TW': 'zh-CHT',
+  'zh': 'zh-CHS',
 };
 
 const truncate = (q: string) => {
@@ -57,6 +56,8 @@ export const youdaoTranslate = async (wordList: string[], from: string, to: stri
     return acc;
   }, []);
 
-  console.log('translatedList: ', translatedList);
+  forEach(translatedList, ({ from: _from, to: _to }) => {
+    console.log(chalk.green(`translate ${from} -> ${_to}`));
+  })
   return translatedList;
 };

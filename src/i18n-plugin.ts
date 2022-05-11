@@ -12,7 +12,9 @@ function i18nPlugin() {
         enter(path: { node: CallExpression }, state: { opts: Config; filename: string }) {
           const { node } = path;
           const { opts, filename } = state;
-          optionChecker(opts);
+          if (!status.initialized) {
+            optionChecker(opts);
+          }
           const { languages, defaultNS, localePath } = pluginOptions!;
           if (filename.includes('node_modules')) {
             return;

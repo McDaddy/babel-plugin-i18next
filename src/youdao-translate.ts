@@ -48,16 +48,29 @@ export const youdaoTranslate = async (wordList: string[], from: string, to: stri
   const configFilePath = pluginOptions?.translateApi?.secretFile;
   const { parsed } = dotenv.config({ path: configFilePath });
 
-  const invokeTranslate = translate(parsed as { appKey: string; secretKey: string }, from, to);
-  const result = await invokeTranslate(wordList.join('\n'));
-  const translationResult = result.split('\n');
-  const translatedList = wordList.reduce<Array<{ from: string; to: string }>>((acc, word, i) => {
-    acc.push({ to: translationResult[i], from: word });
-    return acc;
-  }, []);
-
-  forEach(translatedList, ({ from: _from, to: _to }) => {
-    console.log(chalk.green(`translate ${from} -> ${_to}`));
-  })
-  return translatedList;
+  try {
+    const invokeTranslate = translate(parsed as { appKey: string; secretKey: string }, from, to);
+    const timeoutPromise = new Promise((_resolve, reject) => {
+      setTimeout(() => {
+        reject('timeout');
+      }, 3000);
+    });
+    const result = await Promise.race([invokeTranslate(wordList.join('\n')), timeoutPromise])  as Awaited<ReturnType<typeof invokeTranslate>  >;
+    const translationResult = result.split('\n');
+    const translatedList = wordList.reduce<Array<{ from: string; to: string }>>((acc, word, i) => {
+      acc.push({ to: translationResult[i], from: word });
+      return acc;
+    }, []);
+  
+    forEach(translatedList, ({ from: _from, to: _to }) => {
+      console.log(chalk.green(`[translation]: ${from} -> ${_to}`));
+    })
+    return translatedList;
+  } catch (error) {
+    console.log(chalk.red(`[translation failed]: wordList.join(', '), due to ${error}`));
+    return wordList.reduce<Array<{ from: string; to: string }>>((acc, word) => {
+      acc.push({ to: '__NOT_TRANSLATED__', from: word });
+      return acc;
+    }, []);
+  }
 };

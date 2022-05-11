@@ -1,5 +1,5 @@
 import freeTranslate from '@vitalets/google-translate-api';
-import { find, reduce } from 'lodash';
+import { find, map, reduce } from 'lodash';
 import { googleTranslate } from './google-translate';
 import { namespaces } from './locale-cache';
 import { pluginOptions, status } from './options';
@@ -10,11 +10,12 @@ interface Word {
   text: string;
   ns: string;
   fileName: string;
+  interpolations: string[];
 }
 
 const pendingQueue: Word[] = [];
 
-export const addToTranslateQueue = (text: string, ns: string, fileName: string) => {
+export const addToTranslateQueue = (text: string, ns: string, fileName: string, interpolations: string[]) => {
   if (!namespaces.includes(ns)) {
     console.error(`Namespace ${ns} doesn't exist in current locale files. Please manually add it.`);
     return;
@@ -27,6 +28,7 @@ export const addToTranslateQueue = (text: string, ns: string, fileName: string) 
       text,
       ns,
       fileName,
+      interpolations,
     });
   }
 };
@@ -61,13 +63,26 @@ export const translateTask = async () => {
     writeLocale(null);
     return;
   }
-  const { fileList, words } = pendingQueue.reduce(
+  const { fileList, words } = pendingQueue.reduce<{
+    fileList: Set<string>;
+    words: { text: string; toTranslateText: string, interpolations?: string[] }[];
+  }>(
     (acc, item) => {
-      acc.fileList.add(item.fileName);
-      acc.words.add(item.text);
+      const { fileName, text, interpolations } = item;
+      acc.fileList.add(fileName);
+      if (interpolations) {
+        let toTranslateText = text;
+        for (let i = 0; i < interpolations.length; i++) {
+          const interpolation = interpolations[i];
+          toTranslateText = toTranslateText.replace(interpolation, `@${i}`);
+        }
+        acc.words.push({ text, toTranslateText, interpolations });
+      } else {
+        acc.words.push({ text, toTranslateText: text });
+      }
       return acc;
     },
-    { fileList: new Set<string>(), words: new Set<string>() },
+    { fileList: new Set<string>(), words: [] },
   );
   const toLngList = pluginOptions!.languages
     .filter((lng) => lng.code !== pluginOptions?.primaryLng)
@@ -82,17 +97,38 @@ export const translateTask = async () => {
     const toSpecialCode = pluginOptions?.languages?.find((lng) => lng.code === toLng)?.specialCode;
     const fromLngCode = fromSpecialCode ?? pluginOptions?.primaryLng!;
     const toLngCode = toSpecialCode ?? toLng;
+    const uniqueWords: { text: string; toTranslateText: string, interpolations?: string[]}[] = [];
+    words.filter((item) => {
+      const j = uniqueWords.findIndex(
+        (_item) => _item.text === item.text && _item.toTranslateText === item.toTranslateText,
+      );
+      if (j < 0) {
+        uniqueWords.push(item);
+      }
+      return null;
+    });
     const promises =
       translateMethod === 'free'
-        ? Promise.all(Array.from(words).map((word) => freeTranslateCall(word, fromLngCode, toLngCode)))
+        ? Promise.all(
+            uniqueWords.map(({ toTranslateText }) => freeTranslateCall(toTranslateText, fromLngCode, toLngCode)),
+          )
         : translateMethod === 'google'
-        ? Promise.all(Array.from(words).map((word) => googleTranslate(word, fromLngCode, toLngCode)))
-        : youdaoTranslate(Array.from(words), fromLngCode, toLngCode);
+        ? Promise.all(
+            uniqueWords.map(({ toTranslateText }) => googleTranslate(toTranslateText, fromLngCode, toLngCode)),
+          )
+        : youdaoTranslate(map(uniqueWords, 'toTranslateText'), fromLngCode, toLngCode);
     const results = await promises;
     const resultKVs = reduce(
       results,
       (acc, item) => {
-        acc[item.from] = item.to;
+        const _word = find(uniqueWords, ({ toTranslateText }) => toTranslateText === item.from);
+        if (_word?.interpolations) {
+          for (let x = 0; x < _word?.interpolations.length; x++) {
+            const interpolation = _word?.interpolations[x];
+            item.to = item.to.replace(`@${x}`, interpolation);
+          }
+        }
+        acc[_word!.text] = item.to;
         return acc;
       },
       {} as Obj,
@@ -100,5 +136,6 @@ export const translateTask = async () => {
     resultMap.set(toLngList[i]!, resultKVs);
   }
   writeLocale(resultMap);
+  console.log('resultMap: ', resultMap);
   pendingQueue.length = 0;
 };

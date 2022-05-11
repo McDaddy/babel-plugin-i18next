@@ -5,6 +5,8 @@ import { addToTranslateQueue } from './translate';
 import { Config, status, optionChecker, pluginOptions } from './options';
 import { find } from 'lodash';
 
+const holderRegex = new RegExp('\{(.+?)\}', 'g');
+
 function i18nPlugin() {
   return {
     visitor: {
@@ -53,7 +55,13 @@ function i18nPlugin() {
                 if (process.env.NODE_ENV === 'production') {
                   throw new Error(!matched ? `Can't find translation for ${text} with namespace ${ns}` : `Word ${text} with namespace ${ns} is not translated`);
                 }
-                addToTranslateQueue(text, ns, filename);
+                let match = holderRegex.exec(text);
+                const interpolations: string[] = [];
+                while(match) {
+                  interpolations.push(match[0]);
+                  match = holderRegex.exec(text);
+                }
+                addToTranslateQueue(text, ns, filename, interpolations);
               }
             }
             node.callee.property.name = 't';

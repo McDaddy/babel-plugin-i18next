@@ -45,6 +45,12 @@ function getCustomTransform(newTranslateSource: Map<string, Obj> | null) {
       // extract all i18n.s
       const namespace = opts.ns || pluginOptions?.defaultNS;
 
+      // console.log('opts: ', opts);
+      // if (opts.plurals) {
+      //   console.log('opts.plurals: ', opts.plurals);
+        
+      // }
+
       if (
         isExistingWord(word, namespace, false).matched ||
         (newTranslateSource && newTranslateSource.size && get(newTranslateSource.values().next().value, word))
@@ -148,7 +154,6 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
 }
 
 export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) => {
-  const include = pluginOptions?.include;
   let paths = pluginOptions?.include;
   // if (exclude.length > 0) {
   //   const excludePaths = exclude.map((p) => `!${p}${FILE_EXTENSION}`);

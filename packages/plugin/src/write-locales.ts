@@ -19,7 +19,7 @@ const getOptions = (customProps: any) => {
     func: {
       // 此配置不能改变
       list: ['i18next.t', 'i18n.t'],
-      extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      extensions: ['.js', '.jsx', '.ts', '.tsx', '.vue'],
     },
     defaultValue: UN_TRANSLATE_WORD,
     resource: {
@@ -51,6 +51,7 @@ function getCustomTransform(newTranslateSource: Map<string, Obj> | null) {
         
       // }
 
+      console.log('newTranslateSource: ', newTranslateSource);
       if (
         isExistingWord(word, namespace, false).matched ||
         (newTranslateSource && newTranslateSource.size && get(newTranslateSource.values().next().value, word))

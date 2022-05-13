@@ -1,16 +1,17 @@
 <template>
-  <HelloWorld msg="Welcome to Your i18n App"/>
+  <HelloWorld msg="Welcome to Your i18n App" />
 </template>
 
-<script>
-import HelloWorld from './components/HelloWorld.vue'
+<script lang="ts">
+import { Options, Vue } from "vue-class-component";
+import HelloWorld from "./components/HelloWorld.vue";
 
-export default {
-  name: 'App',
+@Options({
   components: {
-    HelloWorld
-  }
-}
+    HelloWorld,
+  },
+})
+export default class App extends Vue {}
 </script>
 
 <style>

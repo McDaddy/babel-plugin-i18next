@@ -1,0 +1,20 @@
+{
+    "name": "babel-plugin-i18next",
+    "version": "0.0.1",
+    "description": "i18n manage plugin for babel",
+    "main": "dist/index.js",
+    "scripts": {
+      "build": "rollup -c -w"
+    },
+    "keywords": [
+      "babel-plugin",
+      "i18n",
+      "i18next"
+    ],
+    "author": "",
+    "files": [
+      "dist"
+    ],
+    "license": "ISC"
+  }
+  

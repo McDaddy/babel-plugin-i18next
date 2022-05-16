@@ -1,6 +1,6 @@
 {
   "default": {
-    "hello": "hello",
+    "hello": "你好",
     "we have {count} goals": "我们有{count} 个目标"
   }
 }

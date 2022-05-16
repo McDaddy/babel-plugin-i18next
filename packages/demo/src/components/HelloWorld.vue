@@ -43,6 +43,10 @@ import i18n from '../common/i18n';
 })
 export default class HelloWorld extends Vue {
   msg!: string;
+  content!: string;
+  plural!: string;
+  // eslint-disable-next-line no-unused-vars
+  changeLanguage!: (lang: string) => void;
 }
 </script>
 

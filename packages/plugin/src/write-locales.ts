@@ -1,7 +1,6 @@
+/* eslint-disable no-param-reassign */
 import scanner from '@kuimo/i18next-scanner';
 import vfs from 'vinyl-fs';
-import mapStream from 'map-stream';
-import chokidar from 'chokidar';
 import fs from 'fs';
 import path from 'path';
 import { differenceWith, isEqual, unset, merge, get, find, pick, cloneDeep } from 'lodash';
@@ -10,6 +9,7 @@ import omitEmptyObject from '@kuimo/i18next-scanner/lib/omit-empty-object';
 import chalk from 'chalk';
 import { localeFileNames, pluginOptions } from './options';
 import { fileMapping, getLngCache, isExistingWord, namespaces } from './locale-cache';
+import { log } from './utils';
 
 const UN_TRANSLATE_WORD = '__NOT_TRANSLATED__';
 
@@ -39,7 +39,7 @@ const getOptions = (customProps: any) => {
 
 function getCustomTransform(newTranslateSource: Map<string, Obj> | null) {
   function customTransform(file: { path: string }, enc: any, done: Function) {
-    // @ts-ignore
+    // @ts-ignore this
     const { parser } = this;
     const content = fs.readFileSync(file.path, enc);
 
@@ -64,10 +64,10 @@ function getCustomTransform(newTranslateSource: Map<string, Obj> | null) {
 
 function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
   function customFlush(done: Function) {
-    // @ts-ignore
+    // @ts-ignore this
     const { resStore } = this.parser;
     const { resource, removeUnusedKeys, sort } =
-      // @ts-ignore
+      // @ts-ignore this
       this.parser.options;
 
     for (let index = 0; index < Object.keys(resStore).length; index++) {
@@ -118,15 +118,15 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
           Object.keys(obj).forEach((k) => {
             if (obj[k] === UN_TRANSLATE_WORD) {
               const regex = new RegExp('.+(_[^_]+)+$', 'g');
-              let possibleKey = find(newTranslationKeys, (keyWord) => (k.startsWith(keyWord) && regex.test(k)));
+              const possibleKey = find(newTranslationKeys, (keyWord) => k.startsWith(keyWord) && regex.test(k));
               obj[k] = translatedWords[possibleKey ?? k] ?? UN_TRANSLATE_WORD;
             }
           });
         });
       }
 
-      for (let i = 0; i < pluginOptions?.localePath.length!; i++) {
-        const filePath = path.resolve(pluginOptions?.localePath[i]!, `${lng}.json`);
+      for (let i = 0; i < pluginOptions!.localePath.length; i++) {
+        const filePath = path.resolve(pluginOptions!.localePath[i], `${lng}.json`);
         const fileNs = find(fileMapping, ({ path: _path }) => _path === filePath);
         if (fileNs) {
           const _output = pick(output, fileNs.ns);
@@ -141,9 +141,8 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
             continue;
           }
 
-          console.log('_output: ', _output);
           fs.writeFileSync(filePath, JSON.stringify(_output, null, resource.jsonIndent), 'utf8');
-          console.log(chalk.green(`Updated content to ${filePath}`));
+          log(chalk.green(`Updated content to ${filePath}`));
         }
       }
     }
@@ -154,7 +153,7 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
 }
 
 export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) => {
-  let paths = pluginOptions?.include;
+  const paths = pluginOptions?.include;
   // if (exclude.length > 0) {
   //   const excludePaths = exclude.map((p) => `!${p}${FILE_EXTENSION}`);
   //   paths = paths.concat(excludePaths);
@@ -162,8 +161,8 @@ export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) =
   // chokidar.watch([path.resolve(process.cwd(), 'src')]).on('change', (filePath) => {
   //   console.log('filePath: ', filePath);
   // });
-  
-  new Promise((resolve) => {
+
+  Promise.resolve(new Promise((resolve: Function) => {
     vfs
       .src(paths!)
       .pipe(
@@ -177,7 +176,7 @@ export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) =
       .on('end', () => {
         resolve('');
       });
-  });
+  }));
 };
 
 function sortObject(unordered: { [k: string]: Obj } | Obj) {

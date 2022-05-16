@@ -1,8 +1,10 @@
 import freeTranslate from '@vitalets/google-translate-api';
+import chalk from 'chalk';
 import { find, map, reduce } from 'lodash';
 import { googleTranslate } from './google-translate';
 import { namespaces } from './locale-cache';
 import { pluginOptions, status } from './options';
+import { log } from './utils';
 import { writeLocale } from './write-locales';
 import { youdaoTranslate } from './youdao-translate';
 
@@ -17,7 +19,7 @@ const pendingQueue: Word[] = [];
 
 export const addToTranslateQueue = (text: string, ns: string, fileName: string, interpolations: string[]) => {
   if (!namespaces.includes(ns)) {
-    console.error(`Namespace ${ns} doesn't exist in current locale files. Please manually add it.`);
+    log(chalk.red(`Namespace ${ns} doesn't exist in current locale files. Please manually add it.`));
     return;
   }
 
@@ -41,7 +43,7 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
   try {
     const timeoutPromise = new Promise((_resolve, reject) => {
       setTimeout(() => {
-        reject('timeout');
+        reject(Error('timeout'));
       }, 3000);
     });
     const result = (await Promise.race([
@@ -50,7 +52,7 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
     ])) as Awaited<ReturnType<typeof freeTranslate>>;
     return { from: word, to: result.text };
   } catch (error) {
-    console.error(`Failed to translate word ${word}`, error);
+    log(chalk.red(`Failed to translate word ${word}`, error));
     return { from: word, to: '__NOT_TRANSLATED__' };
   }
 };
@@ -63,9 +65,9 @@ export const translateTask = async () => {
     writeLocale(null);
     return;
   }
-  const { fileList, words } = pendingQueue.reduce<{
+  const { words } = pendingQueue.reduce<{
     fileList: Set<string>;
-    words: { text: string; toTranslateText: string, interpolations?: string[] }[];
+    words: Array<{ text: string; toTranslateText: string; interpolations?: string[] }>;
   }>(
     (acc, item) => {
       const { fileName, text, interpolations } = item;
@@ -92,12 +94,12 @@ export const translateTask = async () => {
   for (let i = 0; i < toLngList.length; i++) {
     const toLng = toLngList[i];
     const fromSpecialCode = pluginOptions?.languages?.find(
-      (lng) => lng.code === pluginOptions?.primaryLng!,
+      (lng) => lng.code === pluginOptions?.primaryLng,
     )?.specialCode;
     const toSpecialCode = pluginOptions?.languages?.find((lng) => lng.code === toLng)?.specialCode;
-    const fromLngCode = fromSpecialCode ?? pluginOptions?.primaryLng!;
+    const fromLngCode = fromSpecialCode ?? pluginOptions?.primaryLng;
     const toLngCode = toSpecialCode ?? toLng;
-    const uniqueWords: { text: string; toTranslateText: string, interpolations?: string[]}[] = [];
+    const uniqueWords: Array<{ text: string; toTranslateText: string; interpolations?: string[] }> = [];
     words.filter((item) => {
       const j = uniqueWords.findIndex(
         (_item) => _item.text === item.text && _item.toTranslateText === item.toTranslateText,
@@ -110,13 +112,14 @@ export const translateTask = async () => {
     const promises =
       translateMethod === 'free'
         ? Promise.all(
-            uniqueWords.map(({ toTranslateText }) => freeTranslateCall(toTranslateText, fromLngCode, toLngCode)),
+            uniqueWords.map(({ toTranslateText }) => freeTranslateCall(toTranslateText, fromLngCode!, toLngCode)),
           )
         : translateMethod === 'google'
         ? Promise.all(
-            uniqueWords.map(({ toTranslateText }) => googleTranslate(toTranslateText, fromLngCode, toLngCode)),
+            uniqueWords.map(({ toTranslateText }) => googleTranslate(toTranslateText, fromLngCode!, toLngCode)),
           )
-        : youdaoTranslate(map(uniqueWords, 'toTranslateText'), fromLngCode, toLngCode);
+        : youdaoTranslate(map(uniqueWords, 'toTranslateText'), fromLngCode!, toLngCode);
+    // eslint-disable-next-line no-await-in-loop
     const results = await promises;
     const resultKVs = reduce(
       results,
@@ -125,6 +128,7 @@ export const translateTask = async () => {
         if (_word?.interpolations) {
           for (let x = 0; x < _word?.interpolations.length; x++) {
             const interpolation = _word?.interpolations[x];
+            // eslint-disable-next-line no-param-reassign
             item.to = item.to.replace(`@${x}`, interpolation);
           }
         }
@@ -136,6 +140,5 @@ export const translateTask = async () => {
     resultMap.set(toLngList[i]!, resultKVs);
   }
   writeLocale(resultMap);
-  console.log('resultMap: ', resultMap);
   pendingQueue.length = 0;
 };

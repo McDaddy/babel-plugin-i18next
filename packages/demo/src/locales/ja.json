@@ -1,6 +1,6 @@
 {
   "default": {
-    "hello": "hello",
+    "hello": "こんにちは",
     "we have {count} goals": "{count}の目標があります"
   }
 }

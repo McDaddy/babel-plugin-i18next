@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
 import { pluginOptions } from './options';
-import { includedWord } from './utils';
+import { includedWord, log } from './utils';
 
 /**
  * structure like this:
@@ -13,10 +13,10 @@ import { includedWord } from './utils';
  */
 const localeCache = new Map<string, { [k: string]: Obj }>();
 export const namespaces: string[] = [];
-export const fileMapping: { path: string; ns: string[] }[] = [];
+export const fileMapping: Array<{ path: string; ns: string[] }> = [];
 
 // load all locale content into cache when init
-export const loadLocale = (localePaths: string[], languages: { code: string }[]) => {
+export const loadLocale = (localePaths: string[], languages: Array<{ code: string }>) => {
   languages.forEach(({ code }) => {
     localeCache.set(code, {});
   });
@@ -45,7 +45,7 @@ export const loadLocale = (localePaths: string[], languages: { code: string }[])
   }
   const duplicateNs = namespaces.filter((ns) => namespaces.indexOf(ns) !== namespaces.lastIndexOf(ns));
   if (duplicateNs.length) {
-    throw Error('Duplicate namespace: ' + duplicateNs.join(', '));
+    throw Error(`Duplicate namespace: ${duplicateNs.join(', ')}`);
   }
 };
 
@@ -64,7 +64,7 @@ export const isExistingWord = (text: string, ns: string, alert?: boolean) => {
     return false;
   });
   if (!matched && alert !== false) {
-    console.log(chalk.yellow(`[translation]: word ${text} not found in namespace: ${ns}`));
+    log(chalk.yellow(`[translation]: word ${text} not found in namespace: ${ns}`));
   }
   return { notTranslated, matched };
 };

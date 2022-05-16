@@ -1,7 +1,9 @@
 import chalk from 'chalk';
 import { pluginOptions } from './options';
 import dotenv from 'dotenv';
+import { log } from './utils';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const translate = require('translate');
 
 export const googleTranslate = async (word: string, from: string, to: string) => {
@@ -14,7 +16,7 @@ export const googleTranslate = async (word: string, from: string, to: string) =>
   try {
     const timeoutPromise = new Promise((_resolve, reject) => {
       setTimeout(() => {
-        reject('timeout');
+        reject(Error('timeout'));
       }, 3000);
     });
     const result = await Promise.race([
@@ -26,10 +28,10 @@ export const googleTranslate = async (word: string, from: string, to: string) =>
       }),
       timeoutPromise,
     ]);
-    console.log(chalk.green(`[translation]: ${word} -> ${result}`));
+    log(chalk.green(`[translation]: ${word} -> ${result}`));
     return { from: word, to: result };
   } catch (error) {
-    console.log(chalk.red(`[translation failed]: ${word}, due to ${error}`));
+    log(chalk.red(`[translation failed]: ${word}, due to ${error}`));
     throw error;
   }
 };

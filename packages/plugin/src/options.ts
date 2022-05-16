@@ -9,7 +9,7 @@ export interface Config {
   localePath: string | string[];
   primaryLng: string;
   defaultNS: string;
-  languages: { code: string, specialCode?: string }[];
+  languages: Array<{ code: string, specialCode?: string }>;
   customProps: any;
   include: string[];
   exclude?: string[];

@@ -5,7 +5,7 @@ import { addToTranslateQueue } from './translate';
 import { Config, status, optionChecker, pluginOptions } from './options';
 import { find } from 'lodash';
 
-const holderRegex = new RegExp('\{(.+?)\}', 'g');
+const holderRegex = new RegExp('{(.+?)}', 'g'); // interpolations
 
 function i18nPlugin() {
   return {

@@ -1,6 +1,6 @@
 {
   "default": {
-    "hello": "hello",
+    "hello": "안녕하세요",
     "we have {count} goals": "{count} 목표가 있습니다"
   }
 }

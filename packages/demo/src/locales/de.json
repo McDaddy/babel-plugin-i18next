@@ -1,5 +1,7 @@
 {
   "default": {
-    "hello": "hallo"
+    "hello": "hello",
+    "we have {count} goals_one": "Wir haben {count} Ziele",
+    "we have {count} goals_other": "Wir haben {count} Ziele"
   }
 }

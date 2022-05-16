@@ -450,6 +450,7 @@ class Parser {
                         'ns',
                         'keySeparator',
                         'nsSeparator',
+                        'pluralKeys'
                     ];
 
                     props.forEach((prop) => {
@@ -460,6 +461,8 @@ class Parser {
                                 options[prop.key.name] = prop.value.quasis
                                     .map(element => element.value.cooked)
                                     .join('');
+                            } else if(prop.key.name === 'pluralKeys' && prop.value.type === 'ArrayExpression') {
+                                options[prop.key.name] = prop.value.elements.map((x) => x.value);
                             } else {
                                 // Unable to get value of the property
                                 options[prop.key.name] = '';
@@ -951,17 +954,26 @@ class Parser {
                     let suffixes = pluralFallback
                         ? this.pluralSuffixes[lng]
                         : this.pluralSuffixes[lng].slice(1);
-
-                    suffixes.forEach((pluralSuffix) => {
-                        resKeys.push(`${key}${pluralSuffix}`);
-                    });
-
-                    if (containsContext && containsPlural) {
+                        
+                    if (suffixes.length && suffixes[0] !== '_0') {
+                        const pluralKeys = options.pluralKeys ?? ['one', 'other']
+                        if (pluralKeys) {
+                            suffixes = pluralKeys.map((_key) => `_${_key}`)
+                        }
+    
                         suffixes.forEach((pluralSuffix) => {
-                            contextValues.forEach(contextValue => {
-                                resKeys.push(`${key}${contextSeparator}${contextValue}${pluralSuffix}`);
-                            });
+                            resKeys.push(`${key}${pluralSuffix}`);
                         });
+    
+                        if (containsContext && containsPlural) {
+                            suffixes.forEach((pluralSuffix) => {
+                                contextValues.forEach(contextValue => {
+                                    resKeys.push(`${key}${contextSeparator}${contextValue}${pluralSuffix}`);
+                                });
+                            });
+                        }
+                    } else {
+                        resKeys.push(key);
                     }
                 } else {
                     if (!containsContext || (containsContext && contextFallback)) {

@@ -10,6 +10,7 @@
     </div>
     <div class="content">
       {{ content }}
+      {{ plural }}
     </div>
   </div>
 </template>
@@ -24,10 +25,11 @@ import i18n from '../common/i18n';
   },
   computed: {
     content() {
-      console.log(5525);
-      
-      return `${this.lang}: ${i18n.s("hello world")}`;
-    }
+      return `${this.lang}: ${i18n.s('hello')}`;
+    },
+    plural() {
+      return `${this.lang}: ${i18n.s('we have {count} goals', { count: 2 })}`;
+    },
   },
   data() {
     return { lang: 'en' };
@@ -36,8 +38,8 @@ import i18n from '../common/i18n';
     changeLanguage(lang: string) {
       this.lang = lang;
       i18n.changeLanguage(lang);
-    }
-  }
+    },
+  },
 })
 export default class HelloWorld extends Vue {
   msg!: string;

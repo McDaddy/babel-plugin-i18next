@@ -1,12 +1,12 @@
-import scanner from 'i18next-scanner';
+import scanner from '@kuimo/i18next-scanner';
 import vfs from 'vinyl-fs';
 import mapStream from 'map-stream';
 import chokidar from 'chokidar';
 import fs from 'fs';
 import path from 'path';
 import { differenceWith, isEqual, unset, merge, get, find, pick, cloneDeep } from 'lodash';
-import flattenObjectKeys from 'i18next-scanner/lib/flatten-object-keys';
-import omitEmptyObject from 'i18next-scanner/lib/omit-empty-object';
+import flattenObjectKeys from '@kuimo/i18next-scanner/lib/flatten-object-keys';
+import omitEmptyObject from '@kuimo/i18next-scanner/lib/omit-empty-object';
 import chalk from 'chalk';
 import { localeFileNames, pluginOptions } from './options';
 import { fileMapping, getLngCache, isExistingWord, namespaces } from './locale-cache';
@@ -47,21 +47,15 @@ function getCustomTransform(newTranslateSource: Map<string, Obj> | null) {
       // extract all i18n.s
       const namespace = opts.ns || pluginOptions?.defaultNS;
 
-      console.log('opts: ', opts);
-      // if (opts.plurals) {
-      //   console.log('opts.plurals: ', opts.plurals);
-        
-      // }
-
       if (
         isExistingWord(word, namespace, false).matched ||
         (newTranslateSource && newTranslateSource.size && get(newTranslateSource.values().next().value, word))
       ) {
         // means this word is included in the new translated list or the word is already in the old locale file
         // and it's not a comment word
+        opts.defaultValue = UN_TRANSLATE_WORD;
+        parser.set(word, opts);
       }
-      opts.defaultValue = UN_TRANSLATE_WORD;
-      parser.set(`${word}_one`, opts);
     });
     done();
   }
@@ -118,11 +112,14 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
       // 已有翻译就替换
       if (lng !== pluginOptions?.primaryLng && newTranslateSource) {
         const translatedWords = newTranslateSource.get(lng)!;
+        const newTranslationKeys = Object.keys(translatedWords);
         Object.keys(output).forEach((_ns) => {
           const obj = output[_ns];
           Object.keys(obj).forEach((k) => {
             if (obj[k] === UN_TRANSLATE_WORD) {
-              obj[k] = translatedWords[k] ?? UN_TRANSLATE_WORD;
+              const regex = new RegExp('.+(_[^_]+)+$', 'g');
+              let possibleKey = find(newTranslationKeys, (keyWord) => (k.startsWith(keyWord) && regex.test(k)));
+              obj[k] = translatedWords[possibleKey ?? k] ?? UN_TRANSLATE_WORD;
             }
           });
         });

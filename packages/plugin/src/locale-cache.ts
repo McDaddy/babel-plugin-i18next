@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
 import { pluginOptions } from './options';
+import { includedWord } from './utils';
 
 /**
  * structure like this:
@@ -54,7 +55,7 @@ export const isExistingWord = (text: string, ns: string, alert?: boolean) => {
   const matched = pluginOptions?.languages.every(({ code }) => {
     const cache = localeCache.get(code)!;
     const nsContent = cache[ns];
-    if (nsContent && nsContent[text]) {
+    if (nsContent && includedWord(Object.keys(nsContent), text)) {
       if (nsContent[text] === '__NOT_TRANSLATED__') {
         notTranslated = true;
       }

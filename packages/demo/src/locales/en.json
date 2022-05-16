@@ -1,5 +1,7 @@
 {
   "default": {
-    "hello": "hello"
+    "hello": "hello",
+    "we have {count} goals_one": "we have {count} goals_one",
+    "we have {count} goals_other": "we have {count} goals_other"
   }
 }

@@ -37,7 +37,7 @@ export const optionChecker = (option: Config) => {
   if (!localePath) {
     throw new Error('localePath is required option for babel-plugin-i18next');
   }
-  if (!Array.isArray(localePath) || some(localePath, p => typeof p !== 'string')) {
+  if (typeof localePath !== 'string' && (!Array.isArray(localePath) || some(localePath, p => typeof p !== 'string'))) {
     throw new Error('localePath type must be string array or string');
   }
   if (!include) {

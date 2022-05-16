@@ -1,7 +1,7 @@
 import i18next from 'i18next';
 
 const s = (...args: any) => {
-  return ''
+  return 'Error i18n'
 }
 
-export default { s, t: i18next.t, init: i18next.init, changeLanguage: i18next.changeLanguage };
+export default { s, ...i18next };

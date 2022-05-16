@@ -1,20 +1,24 @@
 {
-    "name": "babel-plugin-i18next",
-    "version": "0.0.1",
-    "description": "i18n manage plugin for babel",
-    "main": "dist/index.js",
-    "scripts": {
-      "build": "rollup -c -w"
-    },
-    "keywords": [
-      "babel-plugin",
-      "i18n",
-      "i18next"
-    ],
-    "author": "",
-    "files": [
-      "dist"
-    ],
-    "license": "ISC"
+  "name": "babel-plugin-i18next",
+  "version": "0.0.1",
+  "description": "i18next manage plugin for babel",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
+  },
+  "keywords": [
+    "babel-plugin",
+    "i18n",
+    "i18next"
+  ],
+  "author": "",
+  "files": [
+    "dist"
+  ],
+  "license": "ISC",
+  "devDependencies": {
+    "chokidar": "^3.5.3",
+    "map-stream": "^0.0.7"
   }
-  
+}

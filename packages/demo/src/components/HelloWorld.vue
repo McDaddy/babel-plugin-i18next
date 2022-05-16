@@ -24,7 +24,9 @@ import i18n from '../common/i18n';
   },
   computed: {
     content() {
-      return `${this.lang}: ${i18n.s("hello")}`;
+      console.log(5525);
+      
+      return `${this.lang}: ${i18n.s("hello world")}`;
     }
   },
   data() {

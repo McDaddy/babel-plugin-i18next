@@ -6,7 +6,7 @@ module.exports = {
     [
       "i18next",
       {
-        localePath: [path.resolve(__dirname, "src", "locales")],
+        localePath: path.resolve(__dirname, "src", "locales"),
         languages: [
           { code: "en" },
           { code: "zh" },
@@ -17,7 +17,7 @@ module.exports = {
         primaryLng: "en",
         defaultNS: "default",
         include: [`${path.resolve(__dirname, "src")}/**/*.{js,jsx,ts,tsx,vue}`],
-        // translateApi: { type: 'google', secretFile: path.resolve(__dirname, '.translaterc') }
+        translateApi: { type: 'google', secretFile: path.resolve(__dirname, '.translaterc') }
       },
     ],
   ],

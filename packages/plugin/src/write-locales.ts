@@ -1,5 +1,7 @@
 import scanner from 'i18next-scanner';
 import vfs from 'vinyl-fs';
+import mapStream from 'map-stream';
+import chokidar from 'chokidar';
 import fs from 'fs';
 import path from 'path';
 import { differenceWith, isEqual, unset, merge, get, find, pick, cloneDeep } from 'lodash';
@@ -45,22 +47,21 @@ function getCustomTransform(newTranslateSource: Map<string, Obj> | null) {
       // extract all i18n.s
       const namespace = opts.ns || pluginOptions?.defaultNS;
 
-      // console.log('opts: ', opts);
+      console.log('opts: ', opts);
       // if (opts.plurals) {
       //   console.log('opts.plurals: ', opts.plurals);
         
       // }
 
-      console.log('newTranslateSource: ', newTranslateSource);
       if (
         isExistingWord(word, namespace, false).matched ||
         (newTranslateSource && newTranslateSource.size && get(newTranslateSource.values().next().value, word))
       ) {
         // means this word is included in the new translated list or the word is already in the old locale file
         // and it's not a comment word
-        opts.defaultValue = UN_TRANSLATE_WORD;
-        parser.set(word, opts);
       }
+      opts.defaultValue = UN_TRANSLATE_WORD;
+      parser.set(`${word}_one`, opts);
     });
     done();
   }
@@ -143,6 +144,7 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
             continue;
           }
 
+          console.log('_output: ', _output);
           fs.writeFileSync(filePath, JSON.stringify(_output, null, resource.jsonIndent), 'utf8');
           console.log(chalk.green(`Updated content to ${filePath}`));
         }
@@ -160,7 +162,10 @@ export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) =
   //   const excludePaths = exclude.map((p) => `!${p}${FILE_EXTENSION}`);
   //   paths = paths.concat(excludePaths);
   // }
-
+  // chokidar.watch([path.resolve(process.cwd(), 'src')]).on('change', (filePath) => {
+  //   console.log('filePath: ', filePath);
+  // });
+  
   new Promise((resolve) => {
     vfs
       .src(paths!)

@@ -1,4 +1,4 @@
-import { some } from "lodash";
+import { some } from 'lodash';
 import fs from 'fs';
 
 export const status = { initialized: false };
@@ -9,11 +9,12 @@ export interface Config {
   localePath: string | string[];
   primaryLng: string;
   defaultNS: string;
-  languages: Array<{ code: string, specialCode?: string }>;
+  languages: Array<{ code: string; specialCode?: string }>;
   customProps: any;
   include: string[];
   exclude?: string[];
-  translateApi?: { type: 'youdao' | 'google', secretFile: string }
+  translateApi?: { type: 'youdao' | 'google'; secretFile: string };
+  interpolation?: { prefix: string; suffix: string };
 }
 
 export interface PluginConfig extends Config {
@@ -37,7 +38,10 @@ export const optionChecker = (option: Config) => {
   if (!localePath) {
     throw new Error('localePath is required option for babel-plugin-i18next');
   }
-  if (typeof localePath !== 'string' && (!Array.isArray(localePath) || some(localePath, p => typeof p !== 'string'))) {
+  if (
+    typeof localePath !== 'string' &&
+    (!Array.isArray(localePath) || some(localePath, (p) => typeof p !== 'string'))
+  ) {
     throw new Error('localePath type must be string array or string');
   }
   if (!include) {
@@ -51,7 +55,9 @@ export const optionChecker = (option: Config) => {
       throw new Error('translateApi type could only be `youdao` or `google`');
     }
     if (!translateApi.secretFile) {
-      throw new Error('translateApi secretFile is required option for babel-plugin-i18next when translateApi is not empty');
+      throw new Error(
+        'translateApi secretFile is required option for babel-plugin-i18next when translateApi is not empty',
+      );
     }
     if (!fs.existsSync(translateApi.secretFile)) {
       throw new Error(`translateApi secretFile ${translateApi.secretFile} is not exists`);

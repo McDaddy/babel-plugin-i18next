@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import fs from 'fs';
+import { filter, find, unset } from 'lodash';
 import path from 'path';
 import { pluginOptions } from './options';
 import { includedWord, log } from './utils';
@@ -12,7 +13,10 @@ import { includedWord, log } from './utils';
  * }
  */
 const localeCache = new Map<string, { [k: string]: Obj }>();
-export const namespaces: string[] = [];
+// all existing namespaces
+export let namespaces: string[] = [];
+// file ns mapping
+// e.g. /xxx/locales -> [ns1, ns2]
 export const fileMapping: Array<{ path: string; ns: string[] }> = [];
 
 // load all locale content into cache when init
@@ -20,28 +24,35 @@ export const loadLocale = (localePaths: string[], languages: Array<{ code: strin
   languages.forEach(({ code }) => {
     localeCache.set(code, {});
   });
-  let parseNsDone = false;
-  for (const language of languages) {
-    const { code } = language;
-    for (const localePath of localePaths) {
-      const fileDirPath = path.isAbsolute(localePath) ? localePath : path.join(process.cwd(), localePath);
-      const localeFilePath = path.join(fileDirPath, `${code}.json`);
-      const fileContent = fs.readFileSync(localeFilePath).toString('utf8');
-      const localeObj = JSON.parse(fileContent);
-      localeCache.set(code, { ...localeCache.get(code), ...localeObj });
-      const fileNamespaces = Object.keys(localeObj);
-      fileMapping.push({
-        path: localeFilePath,
-        ns: fileNamespaces,
-      });
-      fs.watch(localeFilePath, () => {
-        updateFileCache(localeFilePath);
-      });
-      if (!parseNsDone) {
-        namespaces.push(...fileNamespaces);
+  for (const localePath of localePaths) {
+    const fileDirPath = path.isAbsolute(localePath) ? localePath : path.join(process.cwd(), localePath);
+    const primaryLng = pluginOptions?.primaryLng;
+    const localeFilePath = path.join(fileDirPath, `${primaryLng}.json`);
+    const fileContent = fs.readFileSync(localeFilePath).toString('utf8');
+    const localeObj = JSON.parse(fileContent);
+    const fileNamespaces = Object.keys(localeObj);
+    fileMapping.push({
+      path: localePath,
+      ns: fileNamespaces,
+    });
+    namespaces.push(...fileNamespaces);
+    localeCache.set(primaryLng!, { ...localeCache.get(primaryLng!), ...localeObj });
+    fs.watch(localeFilePath, () => {
+      updateFileCache(localeFilePath);
+    });
+    for (const language of languages) {
+      const { code } = language;
+      if (code === primaryLng) {
+        continue;
       }
+      const filePath = path.join(fileDirPath, `${code}.json`);
+      const content = fs.readFileSync(filePath).toString('utf8');
+      const obj = JSON.parse(content);
+      localeCache.set(code, { ...localeCache.get(code), ...obj });
+      fs.watch(filePath, () => {
+        updateFileCache(filePath);
+      });
     }
-    parseNsDone = true;
   }
   const duplicateNs = namespaces.filter((ns) => namespaces.indexOf(ns) !== namespaces.lastIndexOf(ns));
   if (duplicateNs.length) {
@@ -90,5 +101,38 @@ export const updateFileCache = (filePath: string) => {
   const code = fileName.split('.')[0];
   const fileContent = fs.readFileSync(filePath).toString('utf8');
   const localeObj = JSON.parse(fileContent);
-  localeCache.set(code, { ...localeCache.get(code), ...localeObj });
+  const fileNs = find(fileMapping, { path: path.dirname(filePath)}) ;
+  if (fileNs) {
+    const { ns } = fileNs;
+    const oldContent = localeCache.get(code);
+    for (const _ns of ns) {
+      unset(oldContent, _ns); 
+    }
+    localeCache.set(code, { ...oldContent, ...localeObj });
+    const filteredNs = filter(namespaces, (item) => !ns.includes(item) );
+    namespaces = [...filteredNs, ...Object.keys(localeObj)];
+  }
+};
+
+export const isExistNs = (ns: string) => {
+  if (ns === '') {
+    log(chalk.yellow('namespace should not be empty string'));
+  }
+  return namespaces.includes(ns);
+};
+
+export const addNamespaceCache = (ns: string, localePath: string) => {
+  if (!isExistNs(ns)) {
+    namespaces.push(ns);
+  }
+
+  const mapping = find(fileMapping, { path: localePath });
+  if (mapping) {
+    mapping.ns.push(ns);
+  }
+
+  for (const key of localeCache.keys()) {
+    const content = localeCache.get(key);
+    localeCache.set(key, { ...content, ...{ [ns]: {} } });
+  }
 };

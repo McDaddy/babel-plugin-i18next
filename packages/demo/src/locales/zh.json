@@ -1,6 +1,8 @@
 {
   "default": {
-    "hello": "你好",
-    "we have {count} goals": "我们有{count} 个目标"
+    "we have {{count}} goals": "我们有{{count}} 个目标"
+  },
+  "dop": {
+    "hello {{name}}": "你好{{name}}"
   }
 }

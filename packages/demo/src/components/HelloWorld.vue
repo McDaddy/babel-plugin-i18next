@@ -25,10 +25,10 @@ import i18n from '../common/i18n';
   },
   computed: {
     content() {
-      return `${this.lang}: ${i18n.s('hello')}`;
+      return `${this.lang}: ${i18n.s('hello {{name}}','dop', { name: 'xxx' })}`;
     },
     plural() {
-      return `${this.lang}: ${i18n.s('we have {count} goals', { count: 2 })}`;
+      return `${this.lang}: ${i18n.s('we have {{count}} goals', { count: 11 })}`;
     },
   },
   data() {

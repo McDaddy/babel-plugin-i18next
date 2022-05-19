@@ -1,6 +1,8 @@
 {
   "default": {
-    "hello": "こんにちは",
-    "we have {count} goals": "{count}の目標があります"
+    "we have {{count}} goals": "{{count}}の目標があります"
+  },
+  "dop": {
+    "hello {{name}}": "こんにちは{{name}}"
   }
 }

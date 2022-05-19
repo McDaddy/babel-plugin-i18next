@@ -1,19 +1,19 @@
-import { createApp } from "vue";
-import App from "./App.vue";
-import i18n from "./common/i18n";
-import zh from "./locales/zh.json";
-import en from "./locales/en.json";
-import de from "./locales/de.json";
-import ja from "./locales/ja.json";
-import ko from "./locales/ko.json";
+import { createApp } from 'vue';
+import App from './App.vue';
+import i18n from './common/i18n';
+import zh from './locales/zh.json';
+import en from './locales/en.json';
+import de from './locales/de.json';
+import ja from './locales/ja.json';
+import ko from './locales/ko.json';
 
 i18n
   .init({
-    defaultNS: "default",
+    defaultNS: 'default',
     interpolation: {
-      prefix: "{",
-      suffix: "}",
-      formatSeparator: ",",
+      prefix: '{{',
+      suffix: '}}',
+      formatSeparator: ',',
     },
     resources: {
       zh,
@@ -22,7 +22,8 @@ i18n
       ja,
       ko,
     },
+    fallbackLng: 'en',
   })
   .then(() => {
-    createApp(App).mount("#app");
+    createApp(App).mount('#app');
   });

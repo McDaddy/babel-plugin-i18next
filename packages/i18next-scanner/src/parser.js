@@ -420,11 +420,15 @@ class Parser {
             }
 
             if (r[2] !== undefined) {
-                const defaultValue = this.fixStringAfterRegExp(r[2], false);
-                if (!defaultValue) {
-                    continue;
+                if (funcs.length === 1 && funcs[0] === 'i18n.s') {
+                    options.ns = r[2].replace(/['|"]/g, '');
+                } else {
+                    const defaultValue = this.fixStringAfterRegExp(r[2], false);
+                    if (!defaultValue) {
+                        continue;
+                    }
+                    options.defaultValue = defaultValue;
                 }
-                options.defaultValue = defaultValue;
             }
 
             const endsWithComma = (full[full.length - 1] === ',');
@@ -461,7 +465,7 @@ class Parser {
                                 options[prop.key.name] = prop.value.quasis
                                     .map(element => element.value.cooked)
                                     .join('');
-                            } else if(prop.key.name === 'pluralKeys' && prop.value.type === 'ArrayExpression') {
+                            } else if (prop.key.name === 'pluralKeys' && prop.value.type === 'ArrayExpression') {
                                 options[prop.key.name] = prop.value.elements.map((x) => x.value);
                             } else {
                                 // Unable to get value of the property
@@ -954,17 +958,14 @@ class Parser {
                     let suffixes = pluralFallback
                         ? this.pluralSuffixes[lng]
                         : this.pluralSuffixes[lng].slice(1);
-                        
                     if (suffixes.length && suffixes[0] !== '_0') {
-                        const pluralKeys = options.pluralKeys ?? ['one', 'other']
+                        const pluralKeys = options.pluralKeys ?? ['one', 'other'];
                         if (pluralKeys) {
-                            suffixes = pluralKeys.map((_key) => `_${_key}`)
+                            suffixes = pluralKeys.map((_key) => `_${_key}`);
                         }
-    
                         suffixes.forEach((pluralSuffix) => {
                             resKeys.push(`${key}${pluralSuffix}`);
                         });
-    
                         if (containsContext && containsPlural) {
                             suffixes.forEach((pluralSuffix) => {
                                 contextValues.forEach(contextValue => {

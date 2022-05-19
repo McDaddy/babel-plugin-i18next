@@ -3,7 +3,7 @@ import scanner from '@kuimo/i18next-scanner';
 import vfs from 'vinyl-fs';
 import fs from 'fs';
 import path from 'path';
-import { differenceWith, isEqual, unset, merge, get, find, pick, cloneDeep } from 'lodash';
+import { differenceWith, isEqual, unset, merge, get, find, pick, cloneDeep, map } from 'lodash';
 import flattenObjectKeys from '@kuimo/i18next-scanner/lib/flatten-object-keys';
 import omitEmptyObject from '@kuimo/i18next-scanner/lib/omit-empty-object';
 import chalk from 'chalk';
@@ -126,8 +126,9 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
       }
 
       for (let i = 0; i < pluginOptions!.localePath.length; i++) {
-        const filePath = path.resolve(pluginOptions!.localePath[i], `${lng}.json`);
-        const fileNs = find(fileMapping, ({ path: _path }) => _path === filePath);
+        const localePath = pluginOptions!.localePath[i];
+        const fileNs = find(fileMapping, ({ path: _path }) => _path === localePath);
+        const filePath = path.resolve(localePath, `${lng}.json`);
         if (fileNs) {
           const _output = pick(output, fileNs.ns);
           const _oldContent = pick(getLngCache(lng), fileNs.ns);
@@ -142,7 +143,7 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
           }
 
           fs.writeFileSync(filePath, JSON.stringify(_output, null, resource.jsonIndent), 'utf8');
-          log(chalk.green(`Updated content to ${filePath}`));
+          log(chalk.green(`locale content updated: ${filePath}`));
         }
       }
     }
@@ -162,21 +163,23 @@ export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) =
   //   console.log('filePath: ', filePath);
   // });
 
-  Promise.resolve(new Promise((resolve: Function) => {
-    vfs
-      .src(paths!)
-      .pipe(
-        scanner(
-          getOptions(pluginOptions?.customProps),
-          getCustomTransform(newTranslateSource),
-          getCustomFlush(newTranslateSource),
-        ),
-      )
-      .pipe(vfs.dest('./'))
-      .on('end', () => {
-        resolve('');
-      });
-  }));
+  Promise.resolve(
+    new Promise((resolve: Function) => {
+      vfs
+        .src(paths!)
+        .pipe(
+          scanner(
+            getOptions(pluginOptions?.customProps),
+            getCustomTransform(newTranslateSource),
+            getCustomFlush(newTranslateSource),
+          ),
+        )
+        .pipe(vfs.dest('./'))
+        .on('end', () => {
+          resolve('');
+        });
+    }),
+  );
 };
 
 function sortObject(unordered: { [k: string]: Obj } | Obj) {
@@ -192,3 +195,13 @@ function sortObject(unordered: { [k: string]: Obj } | Obj) {
     });
   return ordered;
 }
+
+export const addNamespace = (ns: string, localePath: string) => {
+  const codes = map(pluginOptions?.languages, 'code');
+  for (let j = 0; j < codes.length; j++) {
+    const filePath = path.resolve(localePath, `${codes[j]}.json`);
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const fileObj = JSON.parse(fileContent);
+    fs.writeFileSync(filePath, JSON.stringify({ ...fileObj, ...{ [ns]: {} } }, null, 2), 'utf8');
+  }
+};

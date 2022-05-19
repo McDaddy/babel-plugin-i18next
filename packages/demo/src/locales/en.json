@@ -1,7 +1,9 @@
 {
   "default": {
-    "hello": "hello",
-    "we have {count} goals_one": "we have {count} goals_one",
-    "we have {count} goals_other": "we have {count} goals_other"
+    "we have {{count}} goals_one": "we have {{count}} goal",
+    "we have {{count}} goals_other": "we have {{count}} goals"
+  },
+  "dop": {
+    "hello {{name}}": "hello {{name}}"
   }
 }

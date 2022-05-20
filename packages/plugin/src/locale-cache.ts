@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import fs from 'fs';
+import chokidar from 'chokidar';
 import { filter, find, unset } from 'lodash';
 import path from 'path';
 import { pluginOptions } from './options';
@@ -37,7 +38,7 @@ export const loadLocale = (localePaths: string[], languages: Array<{ code: strin
     });
     namespaces.push(...fileNamespaces);
     localeCache.set(primaryLng!, { ...localeCache.get(primaryLng!), ...localeObj });
-    fs.watch(localeFilePath, () => {
+    chokidar.watch(localeFilePath).on('change', () => {
       updateFileCache(localeFilePath);
     });
     for (const language of languages) {
@@ -49,7 +50,7 @@ export const loadLocale = (localePaths: string[], languages: Array<{ code: strin
       const content = fs.readFileSync(filePath).toString('utf8');
       const obj = JSON.parse(content);
       localeCache.set(code, { ...localeCache.get(code), ...obj });
-      fs.watch(filePath, () => {
+      chokidar.watch(filePath).on('change', () => {
         updateFileCache(filePath);
       });
     }
@@ -75,7 +76,7 @@ export const isExistingWord = (text: string, ns: string, alert?: boolean) => {
     return false;
   });
   if (!matched && alert !== false) {
-    log(chalk.yellow(`[translation]: word ${text} not found in namespace: ${ns}`));
+    log(chalk.yellow(`[translation]: word [${text}] not found in namespace: ${ns}`));
   }
   return { notTranslated, matched };
 };
@@ -101,15 +102,15 @@ export const updateFileCache = (filePath: string) => {
   const code = fileName.split('.')[0];
   const fileContent = fs.readFileSync(filePath).toString('utf8');
   const localeObj = JSON.parse(fileContent);
-  const fileNs = find(fileMapping, { path: path.dirname(filePath)}) ;
+  const fileNs = find(fileMapping, { path: path.dirname(filePath) });
   if (fileNs) {
     const { ns } = fileNs;
     const oldContent = localeCache.get(code);
     for (const _ns of ns) {
-      unset(oldContent, _ns); 
+      unset(oldContent, _ns);
     }
     localeCache.set(code, { ...oldContent, ...localeObj });
-    const filteredNs = filter(namespaces, (item) => !ns.includes(item) );
+    const filteredNs = filter(namespaces, (item) => !ns.includes(item));
     namespaces = [...filteredNs, ...Object.keys(localeObj)];
   }
 };

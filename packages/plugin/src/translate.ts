@@ -2,8 +2,7 @@ import freeTranslate from '@vitalets/google-translate-api';
 import chalk from 'chalk';
 import { find, map, reduce } from 'lodash';
 import { googleTranslate } from './google-translate';
-import { namespaces } from './locale-cache';
-import { pluginOptions, status } from './options';
+import { eventEmitter, pluginOptions, status } from './options';
 import { log } from './utils';
 import { writeLocale } from './write-locales';
 import { youdaoTranslate } from './youdao-translate';
@@ -16,13 +15,9 @@ interface Word {
 }
 
 const pendingQueue: Word[] = [];
+let inProgress = false;
 
 export const addToTranslateQueue = (text: string, ns: string, fileName: string, interpolations: string[]) => {
-  if (!namespaces.includes(ns)) {
-    log(chalk.red(`Namespace ${ns} doesn't exist in current locale files. Please manually add it.`));
-    return;
-  }
-
   const isExist = pendingQueue.some(({ ns: _ns, text: _text }) => _ns === ns && _text === text);
 
   if (!isExist) {
@@ -32,6 +27,7 @@ export const addToTranslateQueue = (text: string, ns: string, fileName: string, 
       fileName,
       interpolations,
     });
+    eventEmitter.emit('translation');
   }
 };
 
@@ -58,14 +54,13 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
 };
 
 export const translateTask = async () => {
-  if (!status.initialized) {
+  if (!status.initialized || inProgress || !pendingQueue.length) {
     return;
   }
-  if (!pendingQueue.length) {
-    writeLocale(null);
-    return;
-  }
-  const { words } = pendingQueue.reduce<{
+  inProgress = true;
+  const currentQueue = [...pendingQueue]; // cp pendingQueue in case new word added while translating
+  pendingQueue.length = 0;
+  const { words } = currentQueue.reduce<{
     fileList: Set<string>;
     words: Array<{ text: string; toTranslateText: string; interpolations?: string[] }>;
   }>(
@@ -86,6 +81,7 @@ export const translateTask = async () => {
     },
     { fileList: new Set<string>(), words: [] },
   );
+
   const toLngList = pluginOptions!.languages
     .filter((lng) => lng.code !== pluginOptions?.primaryLng)
     .map((lng) => lng.code);
@@ -139,6 +135,7 @@ export const translateTask = async () => {
     );
     resultMap.set(toLngList[i]!, resultKVs);
   }
-  writeLocale(resultMap);
-  pendingQueue.length = 0;
+  await writeLocale(resultMap);
+  // eslint-disable-next-line require-atomic-updates
+  inProgress = false;
 };

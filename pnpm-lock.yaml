@@ -186,11 +186,13 @@ importers:
 
   packages/plugin:
     specifiers:
-      '@kuimo/i18next-scanner': workspace:^3.1.0
+      '@kuimo/i18next-scanner': ^3.1.0
       chokidar: ^3.5.3
+      events: ^3.3.0
       map-stream: ^0.0.7
     dependencies:
       '@kuimo/i18next-scanner': link:../i18next-scanner
+      events: 3.3.0
     devDependencies:
       chokidar: 3.5.3
       map-stream: 0.0.7
@@ -7634,7 +7636,6 @@ packages:
   /events/3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
-    dev: true
 
   /execa/0.8.0:
     resolution: {integrity: sha512-zDWS+Rb1E8BlqqhALSt9kUhss8Qq4nN3iof3gsOdyINksElaPyNBtKUMTR62qhvgVWR0CqCX7sdnKe4MnUbFEA==}

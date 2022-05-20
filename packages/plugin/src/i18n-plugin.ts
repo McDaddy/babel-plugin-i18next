@@ -6,7 +6,7 @@ import { Config, status, optionChecker, pluginOptions } from './options';
 import { find } from 'lodash';
 import { log } from './utils';
 import chalk from 'chalk';
-import { addNamespace } from './write-locales';
+import { addNamespace, writeLocale } from './write-locales';
 
 const getInterpolationRegex = (prefix: string, suffix: string) => new RegExp(`${prefix}(.+?)${suffix}`, 'g'); // interpolations
 
@@ -35,6 +35,7 @@ function i18nPlugin() {
             if (!status.initialized) {
               status.initialized = true;
               loadLocale(localePath, languages);
+              writeLocale(null);
             }
 
             const textArgument = node.arguments[0];
@@ -46,7 +47,7 @@ function i18nPlugin() {
                 return;
               }
               let ns = defaultNS;
-              // means its default ns, pass options directly
+              // means its default ns, pass options directly, also means there is no third param
               if (t.isObjectExpression(secondArgument)) {
                 const nsProperty = find(
                   secondArgument.properties,
@@ -58,13 +59,15 @@ function i18nPlugin() {
               } else if (t.isStringLiteral(secondArgument)) {
                 // means its string value in second param, this is ns input
                 ns = secondArgument.value;
+                if (t.isObjectExpression(thirdArgument)) {
+                  thirdArgument.properties.push(t.objectProperty(t.identifier('ns'), t.stringLiteral(ns)));
+                  // move third opts param to second
+                  node.arguments[1] = thirdArgument;
+                } else {
+                  node.arguments[1] = t.objectExpression([t.objectProperty(t.identifier('ns'), t.stringLiteral(ns))]);
+                }
               }
-
-              if (thirdArgument && t.isObjectExpression(thirdArgument)) {
-                thirdArgument.properties.push(t.objectProperty(t.identifier('ns'), t.stringLiteral(ns)));
-                // move third opts param to second
-                node.arguments[1] = thirdArgument;
-              }
+              node.arguments.splice(2, 1);
 
               const isExistingNs = isExistNs(ns);
 
@@ -91,8 +94,8 @@ function i18nPlugin() {
                 const interpolations = checkWordInterpolation(text);
                 addToTranslateQueue(text, ns, filename, interpolations);
               }
+              node.callee.property.name = 't';
             }
-            node.callee.property.name = 't';
           }
         },
       },

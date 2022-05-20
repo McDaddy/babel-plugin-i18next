@@ -1,8 +1,8 @@
 {
   "default": {
+    "just a joke": "그냥 농담",
     "we have {{count}} goals": "{{count}} 목표가 있습니다"
   },
-  "dop": {
-    "hello {{name}}": "안녕하세요 {{name}}"
-  }
+  "dop": {},
+  "msp": {}
 }

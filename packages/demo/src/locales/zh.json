@@ -1,8 +1,8 @@
 {
   "default": {
+    "just a joke": "只是开个玩笑",
     "we have {{count}} goals": "我们有{{count}} 个目标"
   },
-  "dop": {
-    "hello {{name}}": "你好{{name}}"
-  }
+  "dop": {},
+  "msp": {}
 }

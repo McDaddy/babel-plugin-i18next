@@ -18,6 +18,8 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
 import i18n from '../common/i18n';
+// import { utilWord } from '../common/utils';
+// console.log('utilWord: ', utilWord);
 
 @Options({
   props: {
@@ -25,7 +27,7 @@ import i18n from '../common/i18n';
   },
   computed: {
     content() {
-      return `${this.lang}: ${i18n.s('hello {{name}}','dop', { name: 'xxx' })}`;
+      return `${this.lang}: ${i18n.s('just a joke')}`;
     },
     plural() {
       return `${this.lang}: ${i18n.s('we have {{count}} goals', { count: 11 })}`;

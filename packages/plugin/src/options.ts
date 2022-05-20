@@ -1,9 +1,15 @@
 import { some } from 'lodash';
 import fs from 'fs';
+import EventEmitter from 'events';
+import chokidar from 'chokidar';
+import { log } from './utils';
+import chalk from 'chalk';
 
 export const status = { initialized: false };
 export let pluginOptions: PluginConfig | null = null;
 export let localeFileNames: string[] = [];
+export const eventEmitter = new EventEmitter();
+let checked = false;
 
 export interface Config {
   localePath: string | string[];
@@ -22,9 +28,10 @@ export interface PluginConfig extends Config {
 }
 
 export const optionChecker = (option: Config) => {
-  if (status.initialized) {
+  if (status.initialized || checked) {
     return;
   }
+  checked = true;
   const { primaryLng, languages, defaultNS, localePath, include, translateApi } = option ?? {};
   if (!languages || languages.length <= 1) {
     throw new Error('languages config is required and must be more than one type of language');
@@ -67,4 +74,9 @@ export const optionChecker = (option: Config) => {
 
   const _localePaths = Array.isArray(localePath) ? localePath : [localePath];
   pluginOptions = { ...option, localePath: _localePaths };
+
+  chokidar.watch(include).on('unlink', (pathName: string) => {
+    log(chalk.yellow(`${pathName} is deleted, will try to remove related locale contents`));
+    eventEmitter.emit('rescan');
+  });
 };

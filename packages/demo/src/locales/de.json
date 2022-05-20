@@ -1,9 +1,9 @@
 {
   "default": {
+    "just a joke": "nur ein Scherz",
     "we have {{count}} goals_one": "Wir haben {{count}} Ziele",
     "we have {{count}} goals_other": "Wir haben {{count}} Ziele"
   },
-  "dop": {
-    "hello {{name}}": "Hallo {{name}}"
-  }
+  "dop": {},
+  "msp": {}
 }

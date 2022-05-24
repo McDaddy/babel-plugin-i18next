@@ -24,7 +24,7 @@ if (process.env.NODE_ENV !== 'production') {
     }
     rescanTimer = setTimeout(async () => {
       if (status.initialized) {
-        writeLocale(null);
+        writeLocale();
       }
     }, 3000);
   })

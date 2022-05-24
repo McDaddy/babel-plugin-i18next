@@ -27,8 +27,8 @@ import i18n from '../common/i18n';
   },
   computed: {
     content() {
-      console.log(i18n.s('I want xx'));
-      console.log(i18n.s('god'));
+      console.log(i18n.s('I want xx', 'dop'));
+      console.log(i18n.s('help me'));
       
       return `${this.lang}: ${i18n.s('first: we are human')}`;
     },

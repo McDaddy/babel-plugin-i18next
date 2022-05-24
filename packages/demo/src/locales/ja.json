@@ -1,12 +1,10 @@
 {
   "default": {
-    "I want xx": "xxが欲しい",
-    "asdasdejiodjioad": "asdasdejiodjioad",
     "first: we are human": "最初に：私たちは人間です",
-    "god": "神様1231231",
+    "help me": "助けて",
     "we have {{count}} goals": "{{count}}の目標があります"
   },
-  "msp": {
+  "dop": {
     "I want xx": "xxが欲しい"
   }
 }

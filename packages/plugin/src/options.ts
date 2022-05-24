@@ -80,4 +80,7 @@ export const optionChecker = (option: Config) => {
     log(chalk.yellow(`${pathName} is deleted, will try to remove related locale contents`));
     eventEmitter.emit('rescan');
   });
+  chokidar.watch(include).on('change', () => {
+    eventEmitter.emit('rescan');
+  });
 };

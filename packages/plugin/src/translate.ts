@@ -5,7 +5,7 @@ import { googleTranslate } from './google-translate';
 import { getPossibleTranslationByWord } from './locale-cache';
 import { eventEmitter, pluginOptions, status } from './options';
 import { log } from './utils';
-import { writeLocale } from './write-locales';
+import { addExistingTranslationMap, addTranslationResult } from './write-locales';
 import { youdaoTranslate } from './youdao-translate';
 
 interface Word {
@@ -122,7 +122,7 @@ export const translateTask = async () => {
         return false;
       }
       return true;
-    })
+    });
   }
 
   const translateMethod = pluginOptions?.translateApi?.type ?? 'free';
@@ -175,9 +175,14 @@ export const translateTask = async () => {
     resultMap.set(toLngList[i]!, resultKVs);
   }
   if (resultMap.size) {
-    await writeLocale(resultMap, currentTranslationMap);
+    addTranslationResult(resultMap);
   }
-
+  if (currentTranslationMap.size) {
+    addExistingTranslationMap(currentTranslationMap);
+  }
+  if (resultMap.size || currentTranslationMap.size) {
+    eventEmitter.emit('rescan');
+  }
   // eslint-disable-next-line require-atomic-updates
   inProgress = false;
 };

@@ -1,13 +1,11 @@
 {
   "default": {
-    "I want xx": "I want xx",
-    "asdasdejiodjioad": "asdasdejiodjioad",
     "first: we are human": "first: we are human",
-    "god": "god",
+    "help me": "help me",
     "we have {{count}} goals_one": "we have {{count}} goals_one",
     "we have {{count}} goals_other": "we have {{count}} goals_other"
   },
-  "msp": {
+  "dop": {
     "I want xx": "I want xx"
   }
 }

@@ -2,11 +2,11 @@ import { isExistingWord, isExistNs, loadLocale } from './locale-cache';
 import { CallExpression } from '@babel/types';
 import * as t from '@babel/types';
 import { addToTranslateQueue } from './translate';
-import { Config, status, optionChecker, pluginOptions } from './options';
+import { Config, status, optionChecker, pluginOptions, eventEmitter } from './options';
 import { find } from 'lodash';
 import { log } from './utils';
 import chalk from 'chalk';
-import { addNamespace, writeLocale } from './write-locales';
+import { addNamespace } from './write-locales';
 
 function i18nPlugin() {
   return {
@@ -36,7 +36,7 @@ function i18nPlugin() {
             if (!status.initialized) {
               status.initialized = true;
               loadLocale(localePath, languages);
-              writeLocale(null); // consolidate all locales at the first time
+              eventEmitter.emit('rescan'); // consolidate all locales at the first time
             }
 
             const textArgument = node.arguments[0]; // e.g. `i18n.s('hello')` it will be `hello`

@@ -420,7 +420,7 @@ class Parser {
             }
 
             if (r[2] !== undefined) {
-                if (funcs.length === 1 && funcs[0] === 'i18n.s') {
+                if ((funcs.includes('i18n.s') || funcs.includes('i18next.s')) && ['i18n.s', 'i18next.s'].includes(funcs[0])) {
                     options.ns = r[2].replace(/['|"]/g, '');
                 } else {
                     const defaultValue = this.fixStringAfterRegExp(r[2], false);

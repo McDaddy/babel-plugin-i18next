@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import chokidar from 'chokidar';
-import { filter, find, unset } from 'lodash';
+import { filter, unset } from 'lodash';
 import path from 'path';
 import { pluginOptions } from './options';
 import { includedWord, log } from './utils';
@@ -18,7 +18,7 @@ const localeCache = new Map<string, { [k: string]: Obj }>();
 export let namespaces: string[] = [];
 // file ns mapping
 // e.g. /xxx/locales -> [ns1, ns2]
-export const fileMapping: Array<{ path: string; ns: string[] }> = [];
+export const fileMapping: Map<string, string[]> = new Map();
 
 // load all locale content into cache when init
 export const loadLocale = (localePaths: string[], languages: Array<{ code: string }>) => {
@@ -32,10 +32,7 @@ export const loadLocale = (localePaths: string[], languages: Array<{ code: strin
     const fileContent = fs.readFileSync(localeFilePath).toString('utf8');
     const localeObj = JSON.parse(fileContent);
     const fileNamespaces = Object.keys(localeObj);
-    fileMapping.push({
-      path: localePath,
-      ns: fileNamespaces,
-    });
+    fileMapping.set(localePath, fileNamespaces);
     namespaces.push(...fileNamespaces);
     localeCache.set(primaryLng!, { ...localeCache.get(primaryLng!), ...localeObj });
     chokidar.watch(localeFilePath).on('change', () => {
@@ -81,6 +78,18 @@ export const isExistingWord = (text: string, ns: string, alert?: boolean) => {
   return { notTranslated, matched };
 };
 
+/**
+ * if word + ns not found in cache, then try to find word + any ns in cache, to reuse the translation
+ */
+export const getPossibleTranslationByWord = (text: string) => {
+  const lngSource = localeCache.get(pluginOptions!.primaryLng)!;
+  const ns = Object.keys(lngSource).find((_ns: string) => includedWord(Object.keys(lngSource[_ns]), text));
+  if (ns) {
+    return { text, ns, values: getValues(ns, text) } ;
+  }
+  return null;
+}
+
 export const getValue = (lng: string, ns: string, text: string) => {
   return localeCache.get(lng)![ns][text];
 };
@@ -102,16 +111,16 @@ export const updateFileCache = (filePath: string) => {
   const code = fileName.split('.')[0];
   const fileContent = fs.readFileSync(filePath).toString('utf8');
   const localeObj = JSON.parse(fileContent);
-  const fileNs = find(fileMapping, { path: path.dirname(filePath) });
+  const fileNs = fileMapping.get(path.dirname(filePath));
   if (fileNs) {
-    const { ns } = fileNs;
     const oldContent = localeCache.get(code);
-    for (const _ns of ns) {
+    for (const _ns of fileNs) {
       unset(oldContent, _ns);
     }
     localeCache.set(code, { ...oldContent, ...localeObj });
-    const filteredNs = filter(namespaces, (item) => !ns.includes(item));
+    const filteredNs = filter(namespaces, (item) => !fileNs.includes(item));
     namespaces = [...filteredNs, ...Object.keys(localeObj)];
+    fileMapping.set(path.dirname(filePath), Object.keys(localeObj))
   }
 };
 
@@ -120,20 +129,4 @@ export const isExistNs = (ns: string) => {
     log(chalk.yellow('namespace should not be empty string'));
   }
   return namespaces.includes(ns);
-};
-
-export const addNamespaceCache = (ns: string, localePath: string) => {
-  if (!isExistNs(ns)) {
-    namespaces.push(ns);
-  }
-
-  const mapping = find(fileMapping, { path: localePath });
-  if (mapping) {
-    mapping.ns.push(ns);
-  }
-
-  for (const key of localeCache.keys()) {
-    const content = localeCache.get(key);
-    localeCache.set(key, { ...content, ...{ [ns]: {} } });
-  }
 };

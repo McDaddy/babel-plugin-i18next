@@ -4,8 +4,9 @@ import { status, eventEmitter } from './options';
 import { writeLocale } from './write-locales';
 
 let timer: null | NodeJS.Timeout = null; // for debounce
-let removeTimer: null | NodeJS.Timeout = null; // for debounce
+let rescanTimer: null | NodeJS.Timeout = null; // for debounce
 
+// only when env is production, this plugin will trigger auto translation and auto rescan
 if (process.env.NODE_ENV !== 'production') {
   eventEmitter.on('translation', () => {
     if (timer) {
@@ -18,10 +19,10 @@ if (process.env.NODE_ENV !== 'production') {
     }, 1000);
   })
   eventEmitter.on('rescan', () => {
-    if (removeTimer) {
-      clearTimeout(removeTimer);
+    if (rescanTimer) {
+      clearTimeout(rescanTimer);
     }
-    removeTimer = setTimeout(async () => {
+    rescanTimer = setTimeout(async () => {
       if (status.initialized) {
         writeLocale(null);
       }

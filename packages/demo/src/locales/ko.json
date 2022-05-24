@@ -1,8 +1,12 @@
 {
   "default": {
-    "just a joke": "그냥 농담",
+    "I want xx": "나는 xx를 원한다",
+    "asdasdejiodjioad": "asdasdejiodjioad",
+    "first: we are human": "첫째: 우리는 인간이다",
+    "god": "하느님",
     "we have {{count}} goals": "{{count}} 목표가 있습니다"
   },
-  "dop": {},
-  "msp": {}
+  "msp": {
+    "I want xx": "나는 xx를 원한다"
+  }
 }

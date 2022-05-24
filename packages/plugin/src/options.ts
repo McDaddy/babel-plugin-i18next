@@ -21,6 +21,7 @@ export interface Config {
   exclude?: string[];
   translateApi?: { type: 'youdao' | 'google'; secretFile: string };
   interpolation?: { prefix: string; suffix: string };
+  preferExistingTranslation?: boolean;
 }
 
 export interface PluginConfig extends Config {
@@ -73,7 +74,7 @@ export const optionChecker = (option: Config) => {
   localeFileNames = languages.map((lng) => lng.code);
 
   const _localePaths = Array.isArray(localePath) ? localePath : [localePath];
-  pluginOptions = { ...option, localePath: _localePaths };
+  pluginOptions = { preferExistingTranslation: true, ...option, localePath: _localePaths };
 
   chokidar.watch(include).on('unlink', (pathName: string) => {
     log(chalk.yellow(`${pathName} is deleted, will try to remove related locale contents`));

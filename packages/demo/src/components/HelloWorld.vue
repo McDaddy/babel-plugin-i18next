@@ -27,7 +27,10 @@ import i18n from '../common/i18n';
   },
   computed: {
     content() {
-      return `${this.lang}: ${i18n.s('just a joke')}`;
+      console.log(i18n.s('I want xx'));
+      console.log(i18n.s('god'));
+      
+      return `${this.lang}: ${i18n.s('first: we are human')}`;
     },
     plural() {
       return `${this.lang}: ${i18n.s('we have {{count}} goals', { count: 11 })}`;

@@ -1,4 +1,4 @@
-import { isExistingWord, isExistNs, loadLocale, addNamespaceCache } from './locale-cache';
+import { isExistingWord, isExistNs, loadLocale } from './locale-cache';
 import { CallExpression } from '@babel/types';
 import * as t from '@babel/types';
 import { addToTranslateQueue } from './translate';
@@ -8,8 +8,6 @@ import { log } from './utils';
 import chalk from 'chalk';
 import { addNamespace, writeLocale } from './write-locales';
 
-const getInterpolationRegex = (prefix: string, suffix: string) => new RegExp(`${prefix}(.+?)${suffix}`, 'g'); // interpolations
-
 function i18nPlugin() {
   return {
     visitor: {
@@ -18,37 +16,42 @@ function i18nPlugin() {
           const { node } = path;
           const { opts, filename } = state;
           if (!status.initialized) {
+            // initialize plugin options
             optionChecker(opts);
           }
           const { languages, defaultNS, localePath } = pluginOptions!;
+          // exclude node_modules
           if (filename.includes('node_modules')) {
             return;
           }
 
+          // e.g. find code `i18n.s()` or `i18next.s()`
           if (
             t.isMemberExpression(node.callee) &&
             t.isIdentifier(node.callee.object) &&
-            node.callee.object.name === 'i18n' &&
+            ['i18n', 'i18next'].includes(node.callee.object.name) &&
             t.isIdentifier(node.callee.property) &&
             node.callee.property.name === 's'
           ) {
             if (!status.initialized) {
               status.initialized = true;
               loadLocale(localePath, languages);
-              writeLocale(null);
+              writeLocale(null); // consolidate all locales at the first time
             }
 
-            const textArgument = node.arguments[0];
-            const secondArgument = node.arguments[1];
-            const thirdArgument = node.arguments[2];
+            const textArgument = node.arguments[0]; // e.g. `i18n.s('hello')` it will be `hello`
+            // second param could be a string or an Object
+            // if it's an Object, then the third param will be ignored
+            const secondArgument = node.arguments[1]; // e.g. `i18n.s('hello', 'dop')` it will be `dop` namespace, otherwise it should be empty or Object as third param
+            const thirdArgument = node.arguments[2]; // e.g. `i18n.s('hello {{name}}', 'dop', { name: 'Mike' })` it will be `{ name: 'Mike' }`
             if (t.isStringLiteral(textArgument)) {
               const text = textArgument.value;
               if (!text) {
                 return;
               }
-              let ns = defaultNS;
-              // means its default ns, pass options directly, also means there is no third param
+              let ns = defaultNS; // if second param is not string and third param doesn't provide ns property, then use defaultNS
               if (t.isObjectExpression(secondArgument)) {
+                // pass options directly, also means there is no third param
                 const nsProperty = find(
                   secondArgument.properties,
                   (property) => t.isProperty(property) && t.isIdentifier(property.key) && property.key.name === 'ns',
@@ -64,25 +67,34 @@ function i18nPlugin() {
                   // move third opts param to second
                   node.arguments[1] = thirdArgument;
                 } else {
+                  // if third param is not object, then create a new object with ns property
                   node.arguments[1] = t.objectExpression([t.objectProperty(t.identifier('ns'), t.stringLiteral(ns))]);
                 }
+              } else {
+                // if only first text param is passed, then need manually create second param
+                node.arguments[1] = t.objectExpression([t.objectProperty(t.identifier('ns'), t.stringLiteral(ns))]);
               }
-              node.arguments.splice(2, 1);
+              if (t.isObjectExpression(node.arguments[1])) {
+                node.arguments[1].properties.push(t.objectProperty(t.identifier('nsSeparator'), t.booleanLiteral(false)));
+              }
 
+              node.arguments.splice(2, 1); // remove third param if needed
+
+              // check if this is existing namespace
               const isExistingNs = isExistNs(ns);
 
               if (isExistingNs) {
                 const { matched, notTranslated } = isExistingWord(text, ns);
                 if (!matched || notTranslated) {
                   if (process.env.NODE_ENV === 'production') {
+                    // throw error when not found translation in production
                     throw new Error(
                       !matched
                         ? `Can't find translation for ${text} with namespace ${ns}`
                         : `Word ${text} with namespace ${ns} is not translated`,
                     );
                   }
-                  const interpolations = checkWordInterpolation(text);
-                  addToTranslateQueue(text, ns, filename, interpolations);
+                  addToTranslateQueue(text, ns, filename);
                 }
               } else {
                 if (process.env.NODE_ENV === 'production') {
@@ -90,31 +102,15 @@ function i18nPlugin() {
                 }
                 log(chalk.red(`Can't find namespace ${ns}, will create it at ${localePath[0]}`));
                 addNamespace(ns, localePath[0]);
-                addNamespaceCache(ns, localePath[0]);
-                const interpolations = checkWordInterpolation(text);
-                addToTranslateQueue(text, ns, filename, interpolations);
+                addToTranslateQueue(text, ns, filename);
               }
-              node.callee.property.name = 't';
+              node.callee.property.name = 't'; // i18n.s => i18n.t
             }
           }
         },
       },
     },
   };
-}
-
-const checkWordInterpolation = (text: string) => {
-  const interpolationRegex = getInterpolationRegex(
-    pluginOptions?.interpolation?.prefix ?? '{{',
-    pluginOptions?.interpolation?.suffix ?? '}}',
-  );
-  let match = interpolationRegex.exec(text);
-  const interpolations: string[] = [];
-  while (match) {
-    interpolations.push(match[0]);
-    match = interpolationRegex.exec(text);
-  }
-  return interpolations;
 }
 
 export default i18nPlugin;

@@ -1,9 +1,13 @@
 {
   "default": {
-    "just a joke": "nur ein Scherz",
+    "I want xx": "Ich möchte xx",
+    "asdasdejiodjioad": "asdasdejiodjioad",
+    "first: we are human": "Erstens: Wir sind Menschen",
+    "god": "Gott",
     "we have {{count}} goals_one": "Wir haben {{count}} Ziele",
     "we have {{count}} goals_other": "Wir haben {{count}} Ziele"
   },
-  "dop": {},
-  "msp": {}
+  "msp": {
+    "I want xx": "Ich möchte xx"
+  }
 }

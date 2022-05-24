@@ -1,9 +1,13 @@
 {
   "default": {
-    "just a joke": "just a joke",
-    "we have {{count}} goals_one": "we have {{count}} goal",
-    "we have {{count}} goals_other": "we have {{count}} goals"
+    "I want xx": "I want xx",
+    "asdasdejiodjioad": "asdasdejiodjioad",
+    "first: we are human": "first: we are human",
+    "god": "god",
+    "we have {{count}} goals_one": "we have {{count}} goals_one",
+    "we have {{count}} goals_other": "we have {{count}} goals_other"
   },
-  "dop": {},
-  "msp": {}
+  "msp": {
+    "I want xx": "I want xx"
+  }
 }

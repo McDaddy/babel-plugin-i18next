@@ -1,8 +1,12 @@
 {
   "default": {
-    "just a joke": "単なる冗談です",
+    "I want xx": "xxが欲しい",
+    "asdasdejiodjioad": "asdasdejiodjioad",
+    "first: we are human": "最初に：私たちは人間です",
+    "god": "神様1231231",
     "we have {{count}} goals": "{{count}}の目標があります"
   },
-  "dop": {},
-  "msp": {}
+  "msp": {
+    "I want xx": "xxが欲しい"
+  }
 }

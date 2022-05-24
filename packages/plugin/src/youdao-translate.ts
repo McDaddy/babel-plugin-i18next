@@ -46,6 +46,9 @@ const translate = (config: { appKey: string; secretKey: string }, from: string, 
  * translate words by youdao api
  * */
 export const youdaoTranslate = async (wordList: string[], from: string, to: string) => {
+  if (!wordList.length) {
+    return;
+  }
   const configFilePath = pluginOptions?.translateApi?.secretFile;
   const { parsed } = dotenv.config({ path: configFilePath });
 

@@ -1,7 +1,8 @@
 import freeTranslate from '@vitalets/google-translate-api';
 import chalk from 'chalk';
-import { find, map, reduce } from 'lodash';
+import { find, map, reduce, filter } from 'lodash';
 import { googleTranslate } from './google-translate';
+import { getPossibleTranslationByWord } from './locale-cache';
 import { eventEmitter, pluginOptions, status } from './options';
 import { log } from './utils';
 import { writeLocale } from './write-locales';
@@ -17,8 +18,30 @@ interface Word {
 const pendingQueue: Word[] = [];
 let inProgress = false;
 
-export const addToTranslateQueue = (text: string, ns: string, fileName: string, interpolations: string[]) => {
+const getInterpolationRegex = (prefix: string, suffix: string) => new RegExp(`${prefix}(.+?)${suffix}`, 'g'); // interpolations
+
+// extract interpolations from word text
+const getWordInterpolation = (text: string) => {
+  const interpolationRegex = getInterpolationRegex(
+    pluginOptions?.interpolation?.prefix ?? '{{',
+    pluginOptions?.interpolation?.suffix ?? '}}',
+  );
+  let match = interpolationRegex.exec(text);
+  const interpolations: string[] = [];
+  while (match) {
+    interpolations.push(match[0]);
+    match = interpolationRegex.exec(text);
+  }
+  return interpolations;
+};
+
+/**
+ * add not translated word to pending queue
+ */
+export const addToTranslateQueue = (text: string, ns: string, fileName: string) => {
   const isExist = pendingQueue.some(({ ns: _ns, text: _text }) => _ns === ns && _text === text);
+
+  const interpolations = getWordInterpolation(text);
 
   if (!isExist) {
     pendingQueue.push({
@@ -40,7 +63,7 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
     const timeoutPromise = new Promise((_resolve, reject) => {
       setTimeout(() => {
         reject(Error('timeout'));
-      }, 3000);
+      }, 5000);
     });
     const result = (await Promise.race([
       freeTranslate(word, { from: localeMap[from] ?? from, to: localeMap[to] ?? to }),
@@ -49,6 +72,7 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
     return { from: word, to: result.text };
   } catch (error) {
     log(chalk.red(`Failed to translate word ${word}`, error));
+    log(chalk.blue('Recommend to use Google Translate API or Youdao Translate API instead'));
     return { from: word, to: '__NOT_TRANSLATED__' };
   }
 };
@@ -60,13 +84,13 @@ export const translateTask = async () => {
   inProgress = true;
   const currentQueue = [...pendingQueue]; // cp pendingQueue in case new word added while translating
   pendingQueue.length = 0;
+  // extract all toTranslate words
+  // if contains interpolations, e.g. `get {{name}}` => `get @0`
   const { words } = currentQueue.reduce<{
-    fileList: Set<string>;
     words: Array<{ text: string; toTranslateText: string; interpolations?: string[] }>;
   }>(
     (acc, item) => {
-      const { fileName, text, interpolations } = item;
-      acc.fileList.add(fileName);
+      const { text, interpolations } = item;
       if (interpolations) {
         let toTranslateText = text;
         for (let i = 0; i < interpolations.length; i++) {
@@ -79,13 +103,28 @@ export const translateTask = async () => {
       }
       return acc;
     },
-    { fileList: new Set<string>(), words: [] },
+    { words: [] },
   );
 
   const toLngList = pluginOptions!.languages
     .filter((lng) => lng.code !== pluginOptions?.primaryLng)
     .map((lng) => lng.code);
   const resultMap = new Map<string, Obj>();
+  const currentTranslationMap = new Map<string, Obj>();
+  let filteredWords = words;
+
+  if (pluginOptions?.preferExistingTranslation) {
+    // if existing word (just switch ns)
+    filteredWords = filter(words, ({ text }) => {
+      const possibleResult = getPossibleTranslationByWord(text);
+      if (possibleResult) {
+        currentTranslationMap.set(possibleResult.text, possibleResult.values);
+        return false;
+      }
+      return true;
+    })
+  }
+
   const translateMethod = pluginOptions?.translateApi?.type ?? 'free';
   for (let i = 0; i < toLngList.length; i++) {
     const toLng = toLngList[i];
@@ -96,27 +135,27 @@ export const translateTask = async () => {
     const fromLngCode = fromSpecialCode ?? pluginOptions?.primaryLng;
     const toLngCode = toSpecialCode ?? toLng;
     const uniqueWords: Array<{ text: string; toTranslateText: string; interpolations?: string[] }> = [];
-    words.filter((item) => {
+    filteredWords.forEach((item) => {
       const j = uniqueWords.findIndex(
         (_item) => _item.text === item.text && _item.toTranslateText === item.toTranslateText,
       );
       if (j < 0) {
         uniqueWords.push(item);
       }
-      return null;
     });
     const promises =
-      translateMethod === 'free'
-        ? Promise.all(
-            uniqueWords.map(({ toTranslateText }) => freeTranslateCall(toTranslateText, fromLngCode!, toLngCode)),
-          )
+      translateMethod === 'youdao'
+        ? youdaoTranslate(map(uniqueWords, 'toTranslateText'), fromLngCode!, toLngCode)
         : translateMethod === 'google'
         ? Promise.all(
             uniqueWords.map(({ toTranslateText }) => googleTranslate(toTranslateText, fromLngCode!, toLngCode)),
           )
-        : youdaoTranslate(map(uniqueWords, 'toTranslateText'), fromLngCode!, toLngCode);
+        : Promise.all(
+            uniqueWords.map(({ toTranslateText }) => freeTranslateCall(toTranslateText, fromLngCode!, toLngCode)),
+          );
     // eslint-disable-next-line no-await-in-loop
     const results = await promises;
+    // in order to restore interpolations
     const resultKVs = reduce(
       results,
       (acc, item) => {
@@ -135,7 +174,10 @@ export const translateTask = async () => {
     );
     resultMap.set(toLngList[i]!, resultKVs);
   }
-  await writeLocale(resultMap);
+  if (resultMap.size) {
+    await writeLocale(resultMap, currentTranslationMap);
+  }
+
   // eslint-disable-next-line require-atomic-updates
   inProgress = false;
 };

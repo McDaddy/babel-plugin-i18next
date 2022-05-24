@@ -19,7 +19,6 @@ const getOptions = (customProps: any) => {
     removeUnusedKeys: true,
     sort: true,
     func: {
-      // 此配置不能改变
       list: ['i18next.t', 'i18n.t'],
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.vue'],
     },
@@ -29,7 +28,7 @@ const getOptions = (customProps: any) => {
       lineEnding: '\n',
     },
     ...customProps,
-    lngs: localeFileNames, // 此配置不能改变
+    lngs: localeFileNames,
     ns: namespaces,
     trans: false,
     keySeparator: false, // key separator if working with a flat json, it's recommended to set keySeparator to false
@@ -37,24 +36,25 @@ const getOptions = (customProps: any) => {
   };
 };
 
-function getCustomTransform(newTranslateSource: Map<string, Obj> | null) {
+function getCustomTransform(newTranslateSource: Map<string, Obj> | null, currentTranslationMap?: Map<string, Obj>) {
   function customTransform(file: { path: string }, enc: any, done: Function) {
     // @ts-ignore this
     const { parser } = this;
     const content = fs.readFileSync(file.path, enc);
-
-    parser.parseFuncFromString(content, { list: [`i18n.s`] }, (word: string, opts: any) => {
+    
+    parser.parseFuncFromString(content, { list: ['i18n.s', 'i18next.s'] }, (word: string, opts: any) => {
       // extract all i18n.s
       const namespace = opts.ns || pluginOptions?.defaultNS;
-
+      
       if (
         isExistingWord(word, namespace, false).matched ||
-        (newTranslateSource && newTranslateSource.size && get(newTranslateSource.values().next().value, word))
+        (newTranslateSource && newTranslateSource.size && get(newTranslateSource.values().next().value, word)) ||
+        (currentTranslationMap && currentTranslationMap.has(word))
       ) {
         // means this word is included in the new translated list or the word is already in the old locale file
         // and it's not a comment word
         opts.defaultValue = UN_TRANSLATE_WORD;
-        parser.set(word, opts);
+        parser.set(word, { ...opts, nsSeparator: false });
       }
     });
     done();
@@ -62,7 +62,7 @@ function getCustomTransform(newTranslateSource: Map<string, Obj> | null) {
   return customTransform;
 }
 
-function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
+function getCustomFlush(newTranslateSource: Map<string, Obj> | null, currentTranslationMap?: Map<string, Obj>) {
   function customFlush(done: Function) {
     // @ts-ignore this
     const { resStore } = this.parser;
@@ -90,7 +90,7 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
         });
       }
 
-      // 移除废弃的key
+      // remove unused keys
       if (removeUnusedKeys) {
         const namespaceKeys = flattenObjectKeys(nsResource);
         const oldContentKeys = flattenObjectKeys(oldContent);
@@ -103,13 +103,13 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
         oldContent = omitEmptyObject(oldContent);
       }
 
-      // 合并旧的内容
+      // merge old contents
       let output = merge(nsResource, oldContent);
       if (sort) {
         output = sortObject(output);
       }
 
-      // 已有翻译就替换
+      // if new translations exist, then merge it
       if (lng !== pluginOptions?.primaryLng && newTranslateSource) {
         const translatedWords = newTranslateSource.get(lng)!;
         const newTranslationKeys = Object.keys(translatedWords);
@@ -125,13 +125,28 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
         });
       }
 
+      // if there is translation in other ns, the replace it
+      if (lng !== pluginOptions?.primaryLng && currentTranslationMap?.size) {
+        currentTranslationMap.forEach((values, key) => {
+          Object.keys(output).forEach((_ns) => {
+            const obj = output[_ns];
+            Object.keys(obj).forEach((k) => {
+              if (obj[k] === UN_TRANSLATE_WORD && key === k) {
+                obj[k] = values[lng];
+              }
+            });
+          });
+        });
+      }
+
+      // write locales by path one by one
       for (let i = 0; i < pluginOptions!.localePath.length; i++) {
         const localePath = pluginOptions!.localePath[i];
-        const fileNs = find(fileMapping, ({ path: _path }) => _path === localePath);
+        const fileNs = fileMapping.get(localePath);
         const filePath = path.resolve(localePath, `${lng}.json`);
         if (fileNs) {
-          const _output = pick(output, fileNs.ns);
-          const _oldContent = pick(getLngCache(lng), fileNs.ns);
+          const _output = omitEmptyObject(pick(output, fileNs));
+          const _oldContent = pick(getLngCache(lng), fileNs);
           if (!Object.keys(_output).length && !Object.keys(_oldContent).length) {
             // means this locale file has no ns for this change
             continue;
@@ -153,15 +168,14 @@ function getCustomFlush(newTranslateSource: Map<string, Obj> | null) {
   return customFlush;
 }
 
-export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) => {
+export const writeLocale = async (
+  newTranslateSource: Map<string, Obj> | null,
+  currentTranslationMap?: Map<string, Obj>,
+) => {
+  if (process.env.NODE_ENV === 'production') {
+    return;
+  }
   const paths = pluginOptions?.include;
-  // if (exclude.length > 0) {
-  //   const excludePaths = exclude.map((p) => `!${p}${FILE_EXTENSION}`);
-  //   paths = paths.concat(excludePaths);
-  // }
-  // chokidar.watch([path.resolve(process.cwd(), 'src')]).on('change', (filePath) => {
-  //   console.log('filePath: ', filePath);
-  // });
 
   Promise.resolve(
     new Promise((resolve: Function) => {
@@ -170,8 +184,8 @@ export const writeLocale = async (newTranslateSource: Map<string, Obj> | null) =
         .pipe(
           scanner(
             getOptions(pluginOptions?.customProps),
-            getCustomTransform(newTranslateSource),
-            getCustomFlush(newTranslateSource),
+            getCustomTransform(newTranslateSource, currentTranslationMap),
+            getCustomFlush(newTranslateSource, currentTranslationMap),
           ),
         )
         .pipe(vfs.dest('./'))
@@ -196,6 +210,7 @@ function sortObject(unordered: { [k: string]: Obj } | Obj) {
   return ordered;
 }
 
+// add an empty ns
 export const addNamespace = (ns: string, localePath: string) => {
   const codes = map(pluginOptions?.languages, 'code');
   for (let j = 0; j < codes.length; j++) {

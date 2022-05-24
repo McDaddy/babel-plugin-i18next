@@ -1,8 +1,12 @@
 {
   "default": {
-    "just a joke": "只是开个玩笑",
+    "I want xx": "我要xx",
+    "asdasdejiodjioad": "阿斯达斯德吉奥德",
+    "first: we are human": "第一：我们是人",
+    "god": "上帝",
     "we have {{count}} goals": "我们有{{count}} 个目标"
   },
-  "dop": {},
-  "msp": {}
+  "msp": {
+    "I want xx": "我要xx"
+  }
 }

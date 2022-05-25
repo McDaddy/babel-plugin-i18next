@@ -100,7 +100,7 @@ function customFlush(done: Function) {
     }
 
     // remove unused keys
-    if (removeUnusedKeys) {
+    if (removeUnusedKeys && !pluginOptions?.partialBuild) {
       const namespaceKeys = flattenObjectKeys(nsResource);
       const oldContentKeys = flattenObjectKeys(oldContent);
       const unusedKeys = differenceWith(oldContentKeys, namespaceKeys, isEqual);

@@ -29,8 +29,7 @@ console.log('utilWord: ', text);
     content() {
       console.log(i18n.s('I want xx', 'dop'));
       console.log(i18n.s('help me'));
-      console.log(i18n.s('cancel'));
-      console.log(i18n.s('help me please ok'));
+      console.log(i18n.t('help me please ok'));
 
       return `${this.lang}: ${i18n.s('first: we are human')}`;
     },

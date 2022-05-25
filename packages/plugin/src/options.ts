@@ -17,6 +17,7 @@ export interface Config {
   translateApi?: { type: 'youdao' | 'google'; secretFile: string };
   interpolation?: { prefix: string; suffix: string };
   preferExistingTranslation?: boolean;
+  partialBuild?: boolean;
 }
 
 export interface PluginConfig extends Config {
@@ -63,6 +64,6 @@ export const optionChecker = (option: Config) => {
   localeFileNames = languages.map((lng) => lng.code);
 
   const _localePaths = Array.isArray(localePath) ? localePath : [localePath];
-  pluginOptions = { preferExistingTranslation: true, ...option, localePath: _localePaths };
+  pluginOptions = { preferExistingTranslation: true, partialBuild: false, ...option, localePath: _localePaths };
 
 };

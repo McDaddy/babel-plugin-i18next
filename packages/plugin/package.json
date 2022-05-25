@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-i18next",
-  "version": "0.1.1",
+  "version": "0.3.0",
   "description": "i18next manage plugin for babel",
   "main": "dist/index.js",
   "scripts": {
@@ -18,7 +18,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@kuimo/i18next-scanner": "*",
+    "@kuimo/i18next-scanner": "^3.1.1",
     "@vitalets/google-translate-api": "^8.0.0",
     "axios": "^0.27.2",
     "chalk": "4.x",

@@ -23,7 +23,7 @@ if (process.env.NODE_ENV !== 'production') {
       clearTimeout(rescanTimer);
     }
     rescanTimer = setTimeout(async () => {
-      if (status.initialized) {
+      if (status.initialized && !status.inProgress) {
         writeLocale();
       }
     }, 3000);

@@ -1,11 +1,8 @@
 import { some } from 'lodash';
 import fs from 'fs';
 import EventEmitter from 'events';
-import chokidar from 'chokidar';
-import { log } from './utils';
-import chalk from 'chalk';
 
-export const status = { initialized: false };
+export const status = { initialized: false, inProgress: false };
 export let pluginOptions: PluginConfig | null = null;
 export let localeFileNames: string[] = [];
 export const eventEmitter = new EventEmitter();
@@ -17,8 +14,6 @@ export interface Config {
   defaultNS: string;
   languages: Array<{ code: string; specialCode?: string }>;
   customProps: any;
-  include: string[];
-  exclude?: string[];
   translateApi?: { type: 'youdao' | 'google'; secretFile: string };
   interpolation?: { prefix: string; suffix: string };
   preferExistingTranslation?: boolean;
@@ -33,7 +28,7 @@ export const optionChecker = (option: Config) => {
     return;
   }
   checked = true;
-  const { primaryLng, languages, defaultNS, localePath, include, translateApi } = option ?? {};
+  const { primaryLng, languages, defaultNS, localePath, translateApi } = option ?? {};
   if (!languages || languages.length <= 1) {
     throw new Error('languages config is required and must be more than one type of language');
   }
@@ -51,12 +46,6 @@ export const optionChecker = (option: Config) => {
     (!Array.isArray(localePath) || some(localePath, (p) => typeof p !== 'string'))
   ) {
     throw new Error('localePath type must be string array or string');
-  }
-  if (!include) {
-    throw new Error('include is required option for babel-plugin-i18next');
-  }
-  if (!Array.isArray(include) || !include.length) {
-    throw new Error('include must be string array and should has at least one element');
   }
   if (translateApi) {
     if (!['youdao', 'google'].includes(translateApi.type)) {
@@ -76,11 +65,4 @@ export const optionChecker = (option: Config) => {
   const _localePaths = Array.isArray(localePath) ? localePath : [localePath];
   pluginOptions = { preferExistingTranslation: true, ...option, localePath: _localePaths };
 
-  chokidar.watch(include).on('unlink', (pathName: string) => {
-    log(chalk.yellow(`${pathName} is deleted, will try to remove related locale contents`));
-    eventEmitter.emit('rescan');
-  });
-  chokidar.watch(include).on('change', () => {
-    eventEmitter.emit('rescan');
-  });
 };

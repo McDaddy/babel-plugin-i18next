@@ -16,7 +16,6 @@ interface Word {
 }
 
 const pendingQueue: Word[] = [];
-let inProgress = false;
 
 const getInterpolationRegex = (prefix: string, suffix: string) => new RegExp(`${prefix}(.+?)${suffix}`, 'g'); // interpolations
 
@@ -78,10 +77,10 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
 };
 
 export const translateTask = async () => {
-  if (!status.initialized || inProgress || !pendingQueue.length) {
+  if (!status.initialized || status.inProgress || !pendingQueue.length) {
     return;
   }
-  inProgress = true;
+  status.inProgress = true;
   const currentQueue = [...pendingQueue]; // cp pendingQueue in case new word added while translating
   pendingQueue.length = 0;
   // extract all toTranslate words
@@ -184,5 +183,5 @@ export const translateTask = async () => {
     eventEmitter.emit('rescan');
   }
   // eslint-disable-next-line require-atomic-updates
-  inProgress = false;
+  status.inProgress = false;
 };

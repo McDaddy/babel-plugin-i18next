@@ -1,7 +1,10 @@
 {
   "default": {
+    "cancel": "취소",
     "first: we are human": "첫째: 우리는 인간이다",
     "help me": "도와 줘요",
+    "help me please ok": "도와주세요",
+    "text as string": "텍스트를 문자열로",
     "we have {{count}} goals": "{{count}} 목표가 있습니다"
   },
   "dop": {

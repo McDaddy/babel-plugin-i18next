@@ -18,8 +18,8 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
 import i18n from '../common/i18n';
-// import { utilWord } from '../common/utils';
-// console.log('utilWord: ', utilWord);
+import { text } from '../common/utils';
+console.log('utilWord: ', text);
 
 @Options({
   props: {
@@ -29,7 +29,9 @@ import i18n from '../common/i18n';
     content() {
       console.log(i18n.s('I want xx', 'dop'));
       console.log(i18n.s('help me'));
-      
+      console.log(i18n.s('cancel'));
+      console.log(i18n.s('help me please ok'));
+
       return `${this.lang}: ${i18n.s('first: we are human')}`;
     },
     plural() {

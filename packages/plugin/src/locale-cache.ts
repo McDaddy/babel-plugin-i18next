@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import fs from 'fs';
-import chokidar from 'chokidar';
+import chokidar, { FSWatcher } from 'chokidar';
 import { filter, unset } from 'lodash';
 import path from 'path';
-import { pluginOptions } from './options';
+import { eventEmitter, pluginOptions } from './options';
 import { includedWord, log } from './utils';
 
 /**
@@ -19,6 +19,24 @@ export let namespaces: string[] = [];
 // file ns mapping
 // e.g. /xxx/locales -> [ns1, ns2]
 export const fileMapping: Map<string, string[]> = new Map();
+export const includedFiles: Set<string> = new Set();
+
+let watcher: FSWatcher | null = null;
+
+export const addWatchFile = (fileName: string) => {
+  if (!watcher) {
+    watcher = chokidar
+      .watch(fileName)
+      .on('change', () => eventEmitter.emit('rescan'))
+      .on('unlink', (filename: string) => {
+        eventEmitter.emit('rescan');
+        includedFiles.delete(filename);
+      });
+  } else if (!includedFiles.has(fileName)) {
+    watcher.add(fileName);
+  }
+  includedFiles.add(fileName);
+};
 
 // load all locale content into cache when init
 export const loadLocale = (localePaths: string[], languages: Array<{ code: string }>) => {
@@ -85,10 +103,10 @@ export const getPossibleTranslationByWord = (text: string) => {
   const lngSource = localeCache.get(pluginOptions!.primaryLng)!;
   const ns = Object.keys(lngSource).find((_ns: string) => includedWord(Object.keys(lngSource[_ns]), text));
   if (ns) {
-    return { text, ns, values: getValues(ns, text) } ;
+    return { text, ns, values: getValues(ns, text) };
   }
   return null;
-}
+};
 
 export const getValue = (lng: string, ns: string, text: string) => {
   return localeCache.get(lng)![ns][text];
@@ -120,7 +138,7 @@ export const updateFileCache = (filePath: string) => {
     localeCache.set(code, { ...oldContent, ...localeObj });
     const filteredNs = filter(namespaces, (item) => !fileNs.includes(item));
     namespaces = [...filteredNs, ...Object.keys(localeObj)];
-    fileMapping.set(path.dirname(filePath), Object.keys(localeObj))
+    fileMapping.set(path.dirname(filePath), Object.keys(localeObj));
   }
 };
 

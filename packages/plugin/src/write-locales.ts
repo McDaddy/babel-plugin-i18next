@@ -8,7 +8,7 @@ import flattenObjectKeys from '@kuimo/i18next-scanner/lib/flatten-object-keys';
 import omitEmptyObject from '@kuimo/i18next-scanner/lib/omit-empty-object';
 import chalk from 'chalk';
 import { localeFileNames, pluginOptions } from './options';
-import { fileMapping, getLngCache, isExistingWord, namespaces } from './locale-cache';
+import { fileMapping, getLngCache, includedFiles, isExistingWord, namespaces } from './locale-cache';
 import { log } from './utils';
 
 const UN_TRANSLATE_WORD = '__NOT_TRANSLATED__';
@@ -178,7 +178,7 @@ export const writeLocale = async () => {
   if (process.env.NODE_ENV === 'production') {
     return;
   }
-  const paths = pluginOptions?.include;
+  const paths = Array.from(includedFiles);
 
   Promise.resolve(
     new Promise((resolve: Function) => {

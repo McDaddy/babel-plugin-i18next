@@ -1,7 +1,10 @@
 {
   "default": {
+    "cancel": "Abbrechen",
     "first: we are human": "Erstens: Wir sind Menschen",
     "help me": "Hilf mir",
+    "help me please ok": "helft mir bitte ok",
+    "text as string": "Text als Zeichenkette",
     "we have {{count}} goals_one": "Wir haben {{count}} Ziele",
     "we have {{count}} goals_other": "Wir haben {{count}} Ziele"
   },

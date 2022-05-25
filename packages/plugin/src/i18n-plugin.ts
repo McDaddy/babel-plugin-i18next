@@ -1,11 +1,11 @@
-import { isExistingWord, isExistNs, loadLocale } from './locale-cache';
+import chalk from 'chalk';
 import { CallExpression } from '@babel/types';
+import { find } from 'lodash';
 import * as t from '@babel/types';
+import { isExistingWord, isExistNs, loadLocale, addWatchFile } from './locale-cache';
 import { addToTranslateQueue } from './translate';
 import { Config, status, optionChecker, pluginOptions, eventEmitter } from './options';
-import { find } from 'lodash';
 import { log } from './utils';
-import chalk from 'chalk';
 import { addNamespace } from './write-locales';
 
 function i18nPlugin() {
@@ -31,8 +31,13 @@ function i18nPlugin() {
             t.isIdentifier(node.callee.object) &&
             ['i18n', 'i18next'].includes(node.callee.object.name) &&
             t.isIdentifier(node.callee.property) &&
-            node.callee.property.name === 's'
+            (['s', 't'].includes(node.callee.property.name))
           ) {
+            addWatchFile(filename);
+
+            if (node.callee.property.name === 't') {
+              return;
+            }
             if (!status.initialized) {
               status.initialized = true;
               loadLocale(localePath, languages);

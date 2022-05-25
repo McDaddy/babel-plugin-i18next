@@ -1,7 +1,10 @@
 {
   "default": {
+    "cancel": "cancel",
     "first: we are human": "first: we are human",
     "help me": "help me",
+    "help me please ok": "help me please ok",
+    "text as string": "text as string",
     "we have {{count}} goals_one": "we have {{count}} goals_one",
     "we have {{count}} goals_other": "we have {{count}} goals_other"
   },

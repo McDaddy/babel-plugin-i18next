@@ -16,7 +16,7 @@
   },
   "main": "lib/index.js",
   "scripts": {
-    "prepublishOnly": "npm run eslint && npm run build && npm test",
+    "prepublishOnly": "npm run eslint && npm run build",
     "build": "babel ./src --out-dir ./lib",
     "watch": "babel ./src --out-dir ./lib --watch",
     "eslint": "eslint ./src",

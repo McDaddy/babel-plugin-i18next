@@ -1,12 +1,7 @@
 {
   "default": {
-    "first: we are human": "第一：我们是人",
-    "help me": "帮我",
-    "help me please ok": "帮帮我好吗",
+    "hello world": "你好世界",
     "text as string": "文本作为字符串",
     "we have {{count}} goals": "我们有{{count}} 个目标"
-  },
-  "dop": {
-    "I want xx": "我要xx"
   }
 }

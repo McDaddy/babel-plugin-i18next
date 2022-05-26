@@ -27,11 +27,7 @@ console.log('utilWord: ', text);
   },
   computed: {
     content() {
-      console.log(i18n.s('I want xx', 'dop'));
-      console.log(i18n.s('help me'));
-      console.log(i18n.t('help me please ok'));
-
-      return `${this.lang}: ${i18n.s('first: we are human')}`;
+      return `${this.lang}: ${i18n.s('hello world')}`;
     },
     plural() {
       return `${this.lang}: ${i18n.s('we have {{count}} goals', { count: 11 })}`;

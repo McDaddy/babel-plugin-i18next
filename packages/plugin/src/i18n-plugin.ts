@@ -5,12 +5,25 @@ import * as t from '@babel/types';
 import { isExistingWord, isExistNs, loadLocale, addWatchFile } from './locale-cache';
 import { addToTranslateQueue } from './translate';
 import { Config, status, optionChecker, pluginOptions, eventEmitter } from './options';
-import { log } from './utils';
+import { logger } from './utils';
 import { addNamespace } from './write-locales';
+
+let compileTimer: null | NodeJS.Timeout = null;
 
 function i18nPlugin() {
   return {
     visitor: {
+      Program: {
+        enter() {
+          if (compileTimer) {
+            clearTimeout(compileTimer);
+          }
+          status.compiling = true;
+          compileTimer = setTimeout(() => {
+            status.compiling = false;
+          }, 1200);
+        },
+      },
       CallExpression: {
         enter(path: { node: CallExpression }, state: { opts: Config; filename: string }) {
           const { node } = path;
@@ -41,7 +54,7 @@ function i18nPlugin() {
             if (!status.initialized) {
               status.initialized = true;
               loadLocale(localePath, languages);
-              eventEmitter.emit('rescan'); // consolidate all locales at the first time
+              eventEmitter.emit('rescan');
             }
 
             const textArgument = node.arguments[0]; // e.g. `i18n.s('hello')` it will be `hello`
@@ -105,10 +118,11 @@ function i18nPlugin() {
                 if (process.env.NODE_ENV === 'production') {
                   throw new Error(`Can't find namespace ${ns}`);
                 }
-                log(chalk.red(`Can't find namespace ${ns}, will create it at ${localePath[0]}`));
+                logger.warn(chalk.red(`Can't find namespace ${ns}, will create it at ${localePath[0]}`));
                 addNamespace(ns, localePath[0]);
                 addToTranslateQueue(text, ns, filename);
               }
+              
               node.callee.property.name = 't'; // i18n.s => i18n.t
             }
           }

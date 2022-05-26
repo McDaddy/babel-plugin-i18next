@@ -2,7 +2,7 @@ import { some } from 'lodash';
 import fs from 'fs';
 import EventEmitter from 'events';
 
-export const status = { initialized: false, inProgress: false };
+export const status = { initialized: false, translating: false, compiling: false };
 export let pluginOptions: PluginConfig | null = null;
 export let localeFileNames: string[] = [];
 export const eventEmitter = new EventEmitter();
@@ -14,10 +14,10 @@ export interface Config {
   defaultNS: string;
   languages: Array<{ code: string; specialCode?: string }>;
   customProps: any;
+  include: string[];
   translateApi?: { type: 'youdao' | 'google'; secretFile: string };
   interpolation?: { prefix: string; suffix: string };
   preferExistingTranslation?: boolean;
-  partialBuild?: boolean;
 }
 
 export interface PluginConfig extends Config {
@@ -29,7 +29,7 @@ export const optionChecker = (option: Config) => {
     return;
   }
   checked = true;
-  const { primaryLng, languages, defaultNS, localePath, translateApi } = option ?? {};
+  const { primaryLng, languages, defaultNS, localePath, include, translateApi } = option ?? {};
   if (!languages || languages.length <= 1) {
     throw new Error('languages config is required and must be more than one type of language');
   }
@@ -38,6 +38,12 @@ export const optionChecker = (option: Config) => {
   }
   if (!defaultNS) {
     throw new Error('defaultNS is required option for babel-plugin-i18next');
+  }
+  if (!include) {
+    throw new Error('include is required option for babel-plugin-i18next');
+  }
+  if (!Array.isArray(include) || !include.length) {
+    throw new Error('include must be string array and should has at least one element');
   }
   if (!localePath) {
     throw new Error('localePath is required option for babel-plugin-i18next');
@@ -64,6 +70,6 @@ export const optionChecker = (option: Config) => {
   localeFileNames = languages.map((lng) => lng.code);
 
   const _localePaths = Array.isArray(localePath) ? localePath : [localePath];
-  pluginOptions = { preferExistingTranslation: true, partialBuild: false, ...option, localePath: _localePaths };
+  pluginOptions = { preferExistingTranslation: true, ...option, localePath: _localePaths };
 
 };

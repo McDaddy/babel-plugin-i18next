@@ -1,13 +1,8 @@
 {
   "default": {
-    "first: we are human": "first: we are human",
-    "help me": "help me",
-    "help me please ok": "help me please ok",
+    "hello world": "hello world",
     "text as string": "text as string",
     "we have {{count}} goals_one": "we have {{count}} goals_one",
     "we have {{count}} goals_other": "we have {{count}} goals_other"
-  },
-  "dop": {
-    "I want xx": "I want xx"
   }
 }

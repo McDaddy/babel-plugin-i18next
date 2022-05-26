@@ -1,12 +1,7 @@
 {
   "default": {
-    "first: we are human": "첫째: 우리는 인간이다",
-    "help me": "도와 줘요",
-    "help me please ok": "도와주세요",
+    "hello world": "안녕하세요 세계",
     "text as string": "텍스트를 문자열로",
     "we have {{count}} goals": "{{count}} 목표가 있습니다"
-  },
-  "dop": {
-    "I want xx": "나는 xx를 원한다"
   }
 }

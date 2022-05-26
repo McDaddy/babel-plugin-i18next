@@ -16,6 +16,7 @@ module.exports = {
         ],
         primaryLng: "en",
         defaultNS: "default",
+        include: [`${path.resolve(__dirname, 'src')}/**/*.{js,jsx,ts,tsx,vue}`],
         translateApi: { type: 'google', secretFile: path.resolve(__dirname, '.translaterc') },
         interpolation: {
           prefix: '{{',

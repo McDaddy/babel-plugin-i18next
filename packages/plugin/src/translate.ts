@@ -1,10 +1,10 @@
 import freeTranslate from '@vitalets/google-translate-api';
 import chalk from 'chalk';
-import { find, map, reduce, filter } from 'lodash';
+import { find, map, reduce, filter, some } from 'lodash';
 import { googleTranslate } from './google-translate';
 import { getPossibleTranslationByWord } from './locale-cache';
 import { eventEmitter, pluginOptions, status } from './options';
-import { log } from './utils';
+import { logger } from './utils';
 import { addExistingTranslationMap, addTranslationResult } from './write-locales';
 import { youdaoTranslate } from './youdao-translate';
 
@@ -62,7 +62,7 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
     const timeoutPromise = new Promise((_resolve, reject) => {
       setTimeout(() => {
         reject(Error('timeout'));
-      }, 5000);
+      }, 10000);
     });
     const result = (await Promise.race([
       freeTranslate(word, { from: localeMap[from] ?? from, to: localeMap[to] ?? to }),
@@ -70,17 +70,17 @@ const freeTranslateCall = async (word: string, from: string, to: string) => {
     ])) as Awaited<ReturnType<typeof freeTranslate>>;
     return { from: word, to: result.text };
   } catch (error) {
-    log(chalk.red(`Failed to translate word ${word}`, error));
-    log(chalk.blue('Recommend to use Google Translate API or Youdao Translate API instead'));
+    logger.error(chalk.red(`Failed to translate word ${word}`, error));
+    logger.info(chalk.blue('Recommend to use Google Translate API or Youdao Translate API instead'));
     return { from: word, to: '__NOT_TRANSLATED__' };
   }
 };
 
 export const translateTask = async () => {
-  if (!status.initialized || status.inProgress || !pendingQueue.length) {
+  if (!status.initialized || status.translating || !pendingQueue.length) {
     return;
   }
-  status.inProgress = true;
+  status.translating = true;
   const currentQueue = [...pendingQueue]; // cp pendingQueue in case new word added while translating
   pendingQueue.length = 0;
   // extract all toTranslate words
@@ -116,7 +116,8 @@ export const translateTask = async () => {
     // if existing word (just switch ns)
     filteredWords = filter(words, ({ text }) => {
       const possibleResult = getPossibleTranslationByWord(text);
-      if (possibleResult) {
+      if (possibleResult && !some(possibleResult.values, (v) => v === '__NOT_TRANSLATED__')) {
+        logger.info(chalk.green(`Find same keyword [${text}] at namespace ${possibleResult.ns}, will reuse it and skip translation.`) )
         currentTranslationMap.set(possibleResult.text, possibleResult.values);
         return false;
       }
@@ -183,5 +184,5 @@ export const translateTask = async () => {
     eventEmitter.emit('rescan');
   }
   // eslint-disable-next-line require-atomic-updates
-  status.inProgress = false;
+  status.translating = false;
 };

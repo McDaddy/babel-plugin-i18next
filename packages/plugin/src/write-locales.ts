@@ -8,8 +8,8 @@ import flattenObjectKeys from '@kuimo/i18next-scanner/lib/flatten-object-keys';
 import omitEmptyObject from '@kuimo/i18next-scanner/lib/omit-empty-object';
 import chalk from 'chalk';
 import { localeFileNames, pluginOptions } from './options';
-import { fileMapping, getLngCache, includedFiles, isExistingWord, namespaces } from './locale-cache';
-import { log } from './utils';
+import { fileMapping, getLngCache, isExistingWord, namespaces } from './locale-cache';
+import { logger } from './utils';
 
 const UN_TRANSLATE_WORD = '__NOT_TRANSLATED__';
 
@@ -20,11 +20,11 @@ export const addTranslationResult = (resultMap: Map<string, Obj>) => {
   for (const key of resultMap.keys()) {
     translationMap.set(key, { ...translationMap.get(key), ...resultMap.get(key) });
   }
-}
+};
 
-export const addExistingTranslationMap = (currentTranslationMap:  Map<string, Obj>) => {
+export const addExistingTranslationMap = (currentTranslationMap: Map<string, Obj>) => {
   existingTranslationMap = new Map([...existingTranslationMap, ...currentTranslationMap]);
-}
+};
 
 // See options at https://github.com/i18next/i18next-scanner#options
 const getOptions = (customProps: any) => {
@@ -53,15 +53,15 @@ function customTransform(file: { path: string }, enc: any, done: Function) {
   // @ts-ignore this
   const { parser } = this;
   const content = fs.readFileSync(file.path, enc);
-  
+
   parser.parseFuncFromString(content, { list: ['i18n.s', 'i18next.s'] }, (word: string, opts: any) => {
     // extract all i18n.s
     const namespace = opts.ns || pluginOptions?.defaultNS;
-    
+
     if (
       isExistingWord(word, namespace, false).matched ||
       (translationMap.size && get(translationMap.values().next().value, word)) ||
-      (existingTranslationMap.has(word))
+      existingTranslationMap.has(word)
     ) {
       // means this word is included in the new translated list or the word is already in the old locale file
       // and it's not a comment word
@@ -100,7 +100,7 @@ function customFlush(done: Function) {
     }
 
     // remove unused keys
-    if (removeUnusedKeys && !pluginOptions?.partialBuild) {
+    if (removeUnusedKeys) {
       const namespaceKeys = flattenObjectKeys(nsResource);
       const oldContentKeys = flattenObjectKeys(oldContent);
       const unusedKeys = differenceWith(oldContentKeys, namespaceKeys, isEqual);
@@ -167,7 +167,10 @@ function customFlush(done: Function) {
         }
 
         fs.writeFileSync(filePath, JSON.stringify(_output, null, resource.jsonIndent), 'utf8');
-        log(chalk.green(`locale content updated: ${filePath}`));
+        const cwd = process.cwd();
+        logger.info(
+          chalk.green(`Locale file updated: ${filePath.startsWith(cwd) ? filePath.slice(cwd.length + 1) : filePath}`),
+        );
       }
     }
   }
@@ -178,19 +181,13 @@ export const writeLocale = async () => {
   if (process.env.NODE_ENV === 'production') {
     return;
   }
-  const paths = Array.from(includedFiles);
+  const paths = pluginOptions?.include;
 
   Promise.resolve(
     new Promise((resolve: Function) => {
       vfs
         .src(paths!)
-        .pipe(
-          scanner(
-            getOptions(pluginOptions?.customProps),
-            customTransform,
-            customFlush,
-          ),
-        )
+        .pipe(scanner(getOptions(pluginOptions?.customProps), customTransform, customFlush))
         .pipe(vfs.dest('./'))
         .on('end', () => {
           existingTranslationMap.clear();

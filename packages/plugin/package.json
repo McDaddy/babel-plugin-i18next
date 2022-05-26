@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-i18next",
-  "version": "0.3.0",
+  "version": "0.9.0",
   "description": "i18next manage plugin for babel",
   "main": "dist/index.js",
   "scripts": {
@@ -27,6 +27,7 @@
     "events": "^3.3.0",
     "lodash": "^4.17.21",
     "translate": "^1.4.1",
-    "vinyl-fs": "^3.0.3"
+    "vinyl-fs": "^3.0.3",
+    "winston": "^3.7.2"
   }
 }

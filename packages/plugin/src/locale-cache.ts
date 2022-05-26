@@ -4,7 +4,7 @@ import chokidar, { FSWatcher } from 'chokidar';
 import { filter, unset } from 'lodash';
 import path from 'path';
 import { eventEmitter, pluginOptions } from './options';
-import { includedWord, log } from './utils';
+import { includedWord, logger } from './utils';
 
 /**
  * structure like this:
@@ -91,7 +91,7 @@ export const isExistingWord = (text: string, ns: string, alert?: boolean) => {
     return false;
   });
   if (!matched && alert !== false) {
-    log(chalk.yellow(`[translation]: word [${text}] not found in namespace: ${ns}`));
+    logger.warn(chalk.yellow(`Word [${text}] not found in namespace: ${ns}`));
   }
   return { notTranslated, matched };
 };
@@ -144,7 +144,7 @@ export const updateFileCache = (filePath: string) => {
 
 export const isExistNs = (ns: string) => {
   if (ns === '') {
-    log(chalk.yellow('namespace should not be empty string'));
+    logger.warn(chalk.yellow('namespace should not be empty string'));
   }
   return namespaces.includes(ns);
 };

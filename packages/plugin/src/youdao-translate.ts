@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import { pluginOptions } from './options';
 import chalk from 'chalk';
 import { forEach } from 'lodash';
-import { log } from './utils';
+import { logger } from './utils';
 
 const localeCodeMap: Obj = {
   'zh': 'zh-CHS',
@@ -57,7 +57,7 @@ export const youdaoTranslate = async (wordList: string[], from: string, to: stri
     const timeoutPromise = new Promise((_resolve, reject) => {
       setTimeout(() => {
         reject(Error('timeout'));
-      }, 3000);
+      }, 10000);
     });
     const result = await Promise.race([invokeTranslate(wordList.join('\n')), timeoutPromise])  as Awaited<ReturnType<typeof invokeTranslate>  >;
     const translationResult = result.split('\n');
@@ -67,11 +67,11 @@ export const youdaoTranslate = async (wordList: string[], from: string, to: stri
     }, []);
   
     forEach(translatedList, ({ from: _from, to: _to }) => {
-      log(chalk.green(`[translation]: ${from} -> ${_to}`));
+      logger.info(chalk.green(`${_from} -> ${_to}`));
     })
     return translatedList;
   } catch (error) {
-    log(chalk.red(`[translation failed]: wordList.join(', '), due to ${error}`));
+    logger.error(chalk.red(`translation failed for ${wordList.join(', ')}, due to ${error}`));
     return wordList.reduce<Array<{ from: string; to: string }>>((acc, word) => {
       acc.push({ to: '__NOT_TRANSLATED__', from: word });
       return acc;

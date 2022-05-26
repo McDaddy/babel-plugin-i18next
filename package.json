@@ -6,7 +6,7 @@
     "build": "rollup -c -w"
   },
   "author": "kuimo",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@babel/generator": "^7.17.10",
     "@babel/parser": "^7.17.10",

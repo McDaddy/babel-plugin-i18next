@@ -13,17 +13,17 @@ import { addNamespace } from './write-locales';
 function i18nPlugin() {
   return {
     visitor: {
-      Program: {
-        enter() {
-          // if (compileTimer) {
-          //   clearTimeout(compileTimer);
-          // }
-          // status.compiling = true;
-          // compileTimer = setTimeout(() => {
-          //   status.compiling = false;
-          // }, 1200);
-        },
-      },
+      // Program: {
+      //   enter() {
+      //     if (compileTimer) {
+      //       clearTimeout(compileTimer);
+      //     }
+      //     status.compiling = true;
+      //     compileTimer = setTimeout(() => {
+      //       status.compiling = false;
+      //     }, 1200);
+      //   },
+      // },
       CallExpression: {
         enter(path: { node: CallExpression }, state: { opts: Config; filename: string }) {
           const { node } = path;
@@ -46,7 +46,9 @@ function i18nPlugin() {
             t.isIdentifier(node.callee.property) &&
             (['s', 't'].includes(node.callee.property.name))
           ) {
-            addWatchFile(filename);
+            if (process.env.NODE_ENV !== 'production') {
+              addWatchFile(filename);
+            }
 
             if (node.callee.property.name === 't') {
               return;

@@ -39,7 +39,8 @@ export const addWatchFile = (fileName: string) => {
 };
 
 // load all locale content into cache when init
-export const loadLocale = (localePaths: string[], languages: Array<{ code: string }>) => {
+export const loadLocale = () => {
+  const { languages, localePath: localePaths } = pluginOptions!;
   languages.forEach(({ code }) => {
     localeCache.set(code, {});
   });

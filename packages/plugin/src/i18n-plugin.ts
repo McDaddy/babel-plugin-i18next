@@ -4,7 +4,7 @@ import { find } from 'lodash';
 import * as t from '@babel/types';
 import { isExistingWord, isExistNs, loadLocale, addWatchFile } from './locale-cache';
 import { addToTranslateQueue } from './translate';
-import { Config, status, optionChecker, pluginOptions, eventEmitter } from './options';
+import { Config, status, optionChecker, eventEmitter } from './options';
 import { logger } from './utils';
 import { addNamespace } from './write-locales';
 
@@ -32,7 +32,7 @@ function i18nPlugin() {
             // initialize plugin options
             optionChecker(opts);
           }
-          const { languages, defaultNS, localePath } = pluginOptions!;
+          const { defaultNS, localePath } = opts;
           // exclude node_modules
           if (filename.includes('node_modules')) {
             return;
@@ -53,7 +53,7 @@ function i18nPlugin() {
             }
             if (!status.initialized) {
               status.initialized = true;
-              loadLocale(localePath, languages);
+              loadLocale();
               eventEmitter.emit('rescan');
             }
 

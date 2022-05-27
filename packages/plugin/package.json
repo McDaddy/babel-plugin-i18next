@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-i18next",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "i18next manage plugin for babel",
   "main": "dist/index.js",
   "scripts": {

@@ -54,7 +54,7 @@ export const optionChecker = (option: Config) => {
   ) {
     throw new Error('localePath type must be string array or string');
   }
-  if (translateApi) {
+  if (translateApi && process.env.NODE_ENV !== 'production') {
     if (!['youdao', 'google'].includes(translateApi.type)) {
       throw new Error('translateApi type could only be `youdao` or `google`');
     }

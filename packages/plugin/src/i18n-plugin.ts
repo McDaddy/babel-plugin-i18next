@@ -8,22 +8,22 @@ import { Config, status, optionChecker, eventEmitter } from './options';
 import { logger } from './utils';
 import { addNamespace } from './write-locales';
 
-// let compileTimer: null | NodeJS.Timeout = null;
+let compileTimer: null | NodeJS.Timeout = null;
 
 function i18nPlugin() {
   return {
     visitor: {
-      // Program: {
-      //   enter() {
-      //     if (compileTimer) {
-      //       clearTimeout(compileTimer);
-      //     }
-      //     status.compiling = true;
-      //     compileTimer = setTimeout(() => {
-      //       status.compiling = false;
-      //     }, 1200);
-      //   },
-      // },
+      Program: {
+        enter() {
+          if (compileTimer) {
+            clearTimeout(compileTimer);
+          }
+          status.compiling = true;
+          compileTimer = setTimeout(() => {
+            status.compiling = false;
+          }, 1200);
+        },
+      },
       CallExpression: {
         enter(path: { node: CallExpression }, state: { opts: Config; filename: string }) {
           const { node } = path;

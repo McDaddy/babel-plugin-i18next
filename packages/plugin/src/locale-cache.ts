@@ -54,9 +54,11 @@ export const loadLocale = () => {
     fileMapping.set(localePath, fileNamespaces);
     namespaces.push(...fileNamespaces);
     localeCache.set(primaryLng!, { ...localeCache.get(primaryLng!), ...localeObj });
-    // chokidar.watch(localeFilePath).on('change', () => {
-    //   updateFileCache(localeFilePath);
-    // });
+    if (process.env.NODE_ENV !== 'production') {
+      chokidar.watch(localeFilePath).on('change', () => {
+        updateFileCache(localeFilePath);
+      });
+    }
     for (const language of languages) {
       const { code } = language;
       if (code === primaryLng) {
@@ -66,9 +68,11 @@ export const loadLocale = () => {
       const content = fs.readFileSync(filePath).toString('utf8');
       const obj = JSON.parse(content);
       localeCache.set(code, { ...localeCache.get(code), ...obj });
-      // chokidar.watch(filePath).on('change', () => {
-      //   updateFileCache(filePath);
-      // });
+      if (process.env.NODE_ENV !== 'production') {
+        chokidar.watch(filePath).on('change', () => {
+          updateFileCache(filePath);
+        });
+      }
     }
   }
   const duplicateNs = namespaces.filter((ns) => namespaces.indexOf(ns) !== namespaces.lastIndexOf(ns));

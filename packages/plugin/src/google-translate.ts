@@ -10,9 +10,6 @@ export const googleTranslate = async (word: string, from: string, to: string) =>
   const filePath = pluginOptions?.translateApi?.secretFile;
   const { parsed } = dotenv.config({ path: filePath });
 
-  if (!parsed?.secretKey) {
-    throw new Error(`secretKey is not defined in translate api file ${filePath}`);
-  }
   try {
     const timeoutPromise = new Promise((_resolve, reject) => {
       setTimeout(() => {
@@ -24,7 +21,7 @@ export const googleTranslate = async (word: string, from: string, to: string) =>
         from,
         to,
         engine: 'google',
-        key: parsed.secretKey,
+        key: parsed!.secretKey,
       }),
       timeoutPromise,
     ]);

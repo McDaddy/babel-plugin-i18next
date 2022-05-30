@@ -1,5 +1,7 @@
 import freeTranslate from '@vitalets/google-translate-api';
 import chalk from 'chalk';
+import fs from 'fs';
+import dotenv from 'dotenv';
 import { find, map, reduce, filter, some } from 'lodash';
 import { googleTranslate } from './google-translate';
 import { getPossibleTranslationByWord } from './locale-cache';
@@ -117,7 +119,11 @@ export const translateTask = async () => {
     filteredWords = filter(words, ({ text }) => {
       const possibleResult = getPossibleTranslationByWord(text);
       if (possibleResult && !some(possibleResult.values, (v) => v === '__NOT_TRANSLATED__')) {
-        logger.info(chalk.green(`Find same keyword [${text}] at namespace ${possibleResult.ns}, will reuse it and skip translation.`) )
+        logger.info(
+          chalk.green(
+            `Find same keyword [${text}] at namespace ${possibleResult.ns}, will reuse it and skip translation.`,
+          ),
+        );
         currentTranslationMap.set(possibleResult.text, possibleResult.values);
         return false;
       }
@@ -143,16 +149,9 @@ export const translateTask = async () => {
         uniqueWords.push(item);
       }
     });
-    const promises =
-      translateMethod === 'youdao'
-        ? youdaoTranslate(map(uniqueWords, 'toTranslateText'), fromLngCode!, toLngCode)
-        : translateMethod === 'google'
-        ? Promise.all(
-            uniqueWords.map(({ toTranslateText }) => googleTranslate(toTranslateText, fromLngCode!, toLngCode)),
-          )
-        : Promise.all(
-            uniqueWords.map(({ toTranslateText }) => freeTranslateCall(toTranslateText, fromLngCode!, toLngCode)),
-          );
+    const translateFunc = translateMethodMap[translateMethod];
+    const promises = translateFunc(uniqueWords, fromLngCode!, toLngCode);
+
     // eslint-disable-next-line no-await-in-loop
     const results = await promises;
     // in order to restore interpolations
@@ -185,4 +184,42 @@ export const translateTask = async () => {
   }
   // eslint-disable-next-line require-atomic-updates
   status.translating = false;
+};
+
+const translateMethodMap = {
+  free: (words: Array<{ toTranslateText: string }>, from: string, to: string) => {
+    return Promise.all(words.map(({ toTranslateText }) => freeTranslateCall(toTranslateText, from, to)));
+  },
+  google: (words: Array<{ toTranslateText: string }>, from: string, to: string) => {
+    let downgrade = false;
+    const filePath = pluginOptions?.translateApi?.secretFile;
+    if (!filePath || !fs.existsSync(filePath)) {
+      logger.warn(chalk.yellow('secretFile is not configured for google translate API or file not exists, will downgrade to free translate'));
+      downgrade = true;
+    } else {
+      const { parsed } = dotenv.config({ path: filePath });
+      if (!parsed?.secretKey) {
+        logger.warn(chalk.yellow('secretKey does not exists in secretFile, will downgrade to free translate'))
+        downgrade = true;
+      }
+    }
+
+    return downgrade ? translateMethodMap.free(words, from, to) : Promise.all(words.map(({ toTranslateText }) => googleTranslate(toTranslateText, from, to)));
+  },
+  youdao: (words: Array<{ toTranslateText: string }>, from: string, to: string) => {
+    let downgrade = false;
+    const filePath = pluginOptions?.translateApi?.secretFile;
+    if (!filePath || !fs.existsSync(filePath)) {
+      logger.warn(chalk.yellow('secretFile is not configured for google translate API or file not exists, will downgrade to free translate'));
+      downgrade = true;
+    } else {
+      const { parsed } = dotenv.config({ path: filePath });
+      if (!parsed?.secretKey || !parsed?.appKey) {
+        logger.warn(chalk.yellow('secretKey or appKey does not exists in secretFile, will downgrade to free translate'));
+        downgrade = true;
+      }
+    }
+
+    return downgrade ? translateMethodMap.free(words, from, to) :  youdaoTranslate(map(words, 'toTranslateText'), from, to);
+  },
 };

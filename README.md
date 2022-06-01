@@ -12,7 +12,7 @@ a `babel` plugin for automating internationalization
 
 
 
-![demo](https://kuimo-markdown-pic.oss-cn-hangzhou.aliyuncs.com/demo.png)
+![demo](demo.png)
 
 
 

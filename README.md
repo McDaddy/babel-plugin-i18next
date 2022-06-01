@@ -12,7 +12,7 @@ a `babel` plugin for automating internationalization
 
 
 
-![Kapture 2022-06-01 at 16.27.29](https://kuimo-markdown-pic.oss-cn-hangzhou.aliyuncs.com/Kapture 2022-06-01 at 16.27.29.gif)
+![demo.gif](https://kuimo-markdown-pic.oss-cn-hangzhou.aliyuncs.com/Kapture 2022-06-01 at 16.27.29.gif)
 
 
 
@@ -102,57 +102,13 @@ const title = i18n.s('title', 'myNs');
 
 
 
-
-
 ## API
 
-- localePath `string` - （必填）多语言locale文件夹的绝对路径，请确保路径下有`zh.json`与`en.json`两个文件
+- localePath `string | string[]` - （required）The absolute path of the multilingual locale source folder, please make sure that there are source files names as  `lngCode.json` in the path
 
-- ns `string[]` - 所有命名空间
+- primaryLng `string` - （required）primary language
 
-  默认： [‘default’]
-  
-- include `string | string[]` - 此插件无视在`ts-loader`中配置的include，建议手动配置
-
-  默认： 当前执行命令的路径
-
-- exclude `string | string[]` - 在include基础上，去除不需要的目录文件（不支持glob），同时插件会强制忽略`node_modules`中的文件
-
-  默认：[]
-
-- lowerCaseFirstLetter `boolean` - 是否需要强制把英文首字母小写
-
-   默认：`true`
-
-- targetVariable `string` - 匹配的表达式变量名，可以自定义一个i18n变量 e.g. `myI18n`
-
-   默认： `i18n`
-
-- defaultLng `'en'|'zh'` - 与当前工程的locale key一致，如果为中文key那就必须手动设置
-
-   默认：`en`
-
-   ```json
-   // defaultLng: 'zh'
-   // zh.json
-   {
-   	"ns": { "中文": "中文" }
-   }
-   // en.json
-   {
-   	"ns": { "中文": "Chinese" }
-   }
-   
-   // defaultLng: 'en'
-   // zh.json
-   {
-   	"ns": { "Chinese": "中文" }
-   }
-   // en.json
-   {
-   	"ns": { "Chinese": "Chinese" }
-   }
-   ```
+- include `string | string[]` - （required）the source files should be scaned for i18n, should be `glob`
 
 - defaultNs `string` - 默认的命名空间
 

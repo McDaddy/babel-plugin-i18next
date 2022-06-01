@@ -1,7 +1,6 @@
 import i18next from 'i18next';
 
-const s = (...args: any) => {
-  return 'Error i18n'
-}
-
-export default { s, ...i18next };
+export default {
+  ...i18next,
+  s: (text: string, ns?: { [key: string]: any } | string, opts?: { [key: string]: any }) => text,
+};

@@ -10,7 +10,6 @@
     </div>
     <div class="content">
       {{ content }}
-      {{ plural }}
     </div>
   </div>
 </template>
@@ -29,9 +28,9 @@ console.log('utilWord: ', text);
     content() {
       return `${this.lang}: ${i18n.s('hello world')}`;
     },
-    plural() {
-      return `${this.lang}: ${i18n.s('we have {{count}} goals', { count: 11 })}`;
-    },
+    // plural() {
+    //   return `${this.lang}: ${i18n.s('we have {{count}} goals', { count: 11 })}`;
+    // },
   },
   data() {
     return { lang: 'en' };

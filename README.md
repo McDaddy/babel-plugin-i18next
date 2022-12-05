@@ -34,9 +34,10 @@ pnpm install babel-plugin-i18next -D
 
 1. fork this repository
 2. `pnpm i`
-3. `cd packages/demo`
-4. `pnpm serve`
-5. [localhost:8080](http://localhost:8080)
+3. `pnpm build`
+4. `cd packages/demo`
+5. `pnpm serve`
+6. [localhost:8080](http://localhost:8080)
 
 
 

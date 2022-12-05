@@ -3,7 +3,7 @@
   "description": "i18n manage plugin for babel",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rollup -c -w"
+    "build": "pnpm -r build"
   },
   "author": "kuimo",
   "license": "MIT",

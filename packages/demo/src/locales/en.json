@@ -2,7 +2,7 @@
   "default": {
     "hello world": "hello world",
     "text as string": "text as string",
-    "we have {{count}} goals_one": "we have {{count}} goals_one",
-    "we have {{count}} goals_other": "we have {{count}} goals_other"
+    "we have {{count}} goals_one": "we have {{count}} goal",
+    "we have {{count}} goals_other": "we have {{count}} goals"
   }
 }

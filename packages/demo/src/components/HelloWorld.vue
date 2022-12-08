@@ -11,6 +11,9 @@
     <div class="content">
       {{ content }}
     </div>
+    <!-- <div class="content">
+      {{ plural }}
+    </div> -->
   </div>
 </template>
 
@@ -26,9 +29,9 @@ import i18n from '../common/i18n';
     content() {
       return `${this.lang}: ${i18n.s('hello world')}`;
     },
-    // plural() {
-    //   return `${this.lang}: ${i18n.s('we have {{count}} goals', { count: 11 })}`;
-    // },
+    plural() {
+      return `${this.lang}: ${i18n.s('we have {{count}} goals', { count: 1 })}`;
+    },
   },
   data() {
     return { lang: 'en' };

@@ -1,5 +1,6 @@
 {
   "default": {
+    "My Name is {{name}}, I'm {{age}} years old": "Mein Name ist {{name}}, ich bin {{age}} Jahre alt",
     "hello world": "Hallo Welt",
     "text as string": "Text als Zeichenkette",
     "we have {{count}} goals_one": "Wir haben {{count}} Ziele",

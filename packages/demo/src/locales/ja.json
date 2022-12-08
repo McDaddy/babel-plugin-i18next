@@ -1,5 +1,6 @@
 {
   "default": {
+    "My Name is {{name}}, I'm {{age}} years old": "私の名前は {{name}}、{{age}} 歳です",
     "hello world": "こんにちは世界",
     "text as string": "文字列としてのテキスト",
     "we have {{count}} goals": "{{count}}の目標があります"

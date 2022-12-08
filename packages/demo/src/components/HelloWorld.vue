@@ -14,6 +14,9 @@
     <!-- <div class="content">
       {{ plural }}
     </div> -->
+    <!-- <div class="content">
+      {{ interpolation }}
+    </div> -->
   </div>
 </template>
 
@@ -32,6 +35,9 @@ import i18n from '../common/i18n';
     plural() {
       return `${this.lang}: ${i18n.s('we have {{count}} goals', { count: 1 })}`;
     },
+    interpolation() {
+      return `${this.lang}: ${i18n.s('My Name is {{name}}, I\'m {{age}} years old', { name: 'McDaddy', age: 18 })}`;
+    },
   },
   data() {
     return { lang: 'en' };
@@ -47,6 +53,7 @@ export default class HelloWorld extends Vue {
   msg!: string;
   content!: string;
   plural!: string;
+  interpolation!: string;
   // eslint-disable-next-line no-unused-vars
   changeLanguage!: (lang: string) => void;
 }

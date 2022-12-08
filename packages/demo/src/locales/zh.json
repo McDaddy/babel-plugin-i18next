@@ -1,5 +1,6 @@
 {
   "default": {
+    "My Name is {{name}}, I'm {{age}} years old": "我的名字是{{name}}，我今年{{age}}岁",
     "hello world": "你好世界",
     "text as string": "文本作为字符串",
     "we have {{count}} goals": "我们有{{count}} 个目标"

@@ -1,5 +1,6 @@
 {
   "default": {
+    "My Name is {{name}}, I'm {{age}} years old": "내 이름은 {{name}}이고 나이는 {{age}}살입니다.",
     "hello world": "안녕 세상",
     "text as string": "텍스트를 문자열로",
     "we have {{count}} goals": "{{count}} 목표가 있습니다"

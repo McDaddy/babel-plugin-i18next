@@ -120,8 +120,9 @@ function i18nPlugin() {
                 if (process.env.NODE_ENV === 'production') {
                   throw new Error(`Can't find namespace ${ns}`);
                 }
-                logger.warn(chalk.red(`Can't find namespace ${ns}, will create it at ${localePath[0]}`));
-                addNamespace(ns, localePath[0]);
+                const firstLocalePath = Array.isArray(localePath) ? localePath[0] : localePath;
+                logger.warn(chalk.red(`Can't find namespace ${ns}, will create it at ${firstLocalePath}`));
+                addNamespace(ns, firstLocalePath);
                 addToTranslateQueue(text, ns, filename);
               }
               

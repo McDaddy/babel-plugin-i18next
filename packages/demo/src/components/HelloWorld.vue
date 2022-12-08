@@ -17,8 +17,6 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
 import i18n from '../common/i18n';
-import { text } from '../common/utils';
-console.log('utilWord: ', text);
 
 @Options({
   props: {

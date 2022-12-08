@@ -1,6 +1,6 @@
 {
   "default": {
-    "hello world": "안녕하세요 세계",
+    "hello world": "안녕 세상",
     "text as string": "텍스트를 문자열로",
     "we have {{count}} goals": "{{count}} 목표가 있습니다"
   }
